@@ -45,7 +45,7 @@ export function NetWorthChart({ savings, income, expenses, debt, emergencyFundMo
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {/* 1. Health Score */}
-      <div className={`md:col-span-1 border rounded-lg p-5 flex flex-col justify-between ${getScoreColor(healthScore)}`}>
+      <div className={`md:col-span-1 border rounded-xl p-5 flex flex-col justify-between backdrop-blur-md shadow-lg shadow-black/10 transition-all duration-300 hover:scale-[1.01] ${getScoreColor(healthScore)}`}>
         <div className="space-y-1">
           <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold block">Điểm sức khỏe tài chính</span>
           <p className="text-xs">{getScoreMessage(healthScore)}</p>
@@ -63,7 +63,7 @@ export function NetWorthChart({ savings, income, expenses, debt, emergencyFundMo
       </div>
 
       {/* 2. Savings Rate Progress */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 flex flex-col justify-between">
+      <div className="backdrop-blur-lg bg-zinc-900/55 border border-zinc-800/80 rounded-xl p-5 flex flex-col justify-between shadow-lg shadow-black/10 hover:border-zinc-700/60 transition-all duration-300">
         <div className="space-y-1">
           <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold block">Tỷ lệ tích lũy hàng tháng</span>
           <p className="text-xs text-zinc-400">
@@ -85,7 +85,7 @@ export function NetWorthChart({ savings, income, expenses, debt, emergencyFundMo
       </div>
 
       {/* 3. Debt Shield Ratio */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 flex flex-col justify-between">
+      <div className="backdrop-blur-lg bg-zinc-900/55 border border-zinc-800/80 rounded-xl p-5 flex flex-col justify-between shadow-lg shadow-black/10 hover:border-zinc-700/60 transition-all duration-300">
         <div className="space-y-1">
           <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-semibold block">Hệ số lá chắn dư nợ</span>
           <p className="text-xs text-zinc-400">

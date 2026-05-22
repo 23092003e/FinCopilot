@@ -72,7 +72,7 @@ export function Simulator({ onSaveSimulation, savedSim }: SimulatorProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Left Side: Inputs */}
-        <div className="lg:col-span-1 bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-5 shadow-xl">
+        <div className="lg:col-span-1 backdrop-blur-lg bg-zinc-900/55 border border-zinc-800/80 rounded-2xl p-5 space-y-5 shadow-xl">
           <h3 className="text-zinc-200 text-sm font-bold border-b border-zinc-850 pb-2 flex items-center gap-1.5">
             <Landmark className="w-4 h-4 text-emerald-400" />
             Tham số Tích lũy hàng tháng
@@ -190,13 +190,13 @@ export function Simulator({ onSaveSimulation, savedSim }: SimulatorProps) {
           {/* Quick numbers overview */}
           {finalPoint && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3.5 space-y-1">
+              <div className="backdrop-blur-md bg-zinc-900/40 border border-zinc-800/60 rounded-xl p-3.5 space-y-1 shadow-sm">
                 <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono">Tổng vốn gốc góp</span>
                 <p className="text-zinc-200 font-bold text-sm tracking-tight">{formatVND(finalPoint.contributed)}</p>
                 <span className="text-[10px] text-zinc-550 text-zinc-500 leading-none">vốn tích lũy túi phát</span>
               </div>
               
-              <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3.5 space-y-1">
+              <div className="backdrop-blur-md bg-zinc-900/65 border border-emerald-500/15 rounded-xl p-3.5 space-y-1 shadow-[0_0_15px_rgba(16,185,129,0.02)]">
                 <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono">Tài sản tích sản tích lũy</span>
                 <p className="text-emerald-400 font-extrabold text-sm tracking-tight">{formatVND(finalPoint.nominal)}</p>
                 <span className="text-[10px] text-emerald-500/70 font-mono leading-none">
@@ -204,7 +204,7 @@ export function Simulator({ onSaveSimulation, savedSim }: SimulatorProps) {
                 </span>
               </div>
 
-              <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3.5 space-y-1">
+              <div className="backdrop-blur-md bg-zinc-900/40 border border-indigo-500/15 rounded-xl p-3.5 space-y-1 shadow-[0_0_15px_rgba(99,102,241,0.02)]">
                 <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono font-bold">Giá trị thực tế (trừ lạm phát)</span>
                 <p className="text-indigo-400 font-bold text-sm tracking-tight">{formatVND(finalPoint.real)}</p>
                 <span className="text-[10px] text-zinc-550 text-zinc-500 leading-none">bằng sức mua quy đổi năm thứ 0</span>
@@ -216,7 +216,7 @@ export function Simulator({ onSaveSimulation, savedSim }: SimulatorProps) {
           <DCAGrowthChart data={chartData} />
 
           {/* Quick descriptive tips */}
-          <div className="bg-zinc-950 p-4 border border-zinc-900 rounded-lg flex items-start gap-3">
+          <div className="backdrop-blur-md bg-zinc-950/65 p-4 border border-zinc-900 rounded-xl flex items-start gap-3 shadow-md">
             <Award className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
             <div className="space-y-1">
               <span className="text-xs font-bold text-zinc-200 font-sans block">Sức mạnh kỳ diệu của việc Kỷ luật DCA</span>

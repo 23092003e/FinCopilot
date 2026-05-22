@@ -155,7 +155,7 @@ export function Dashboard({ profile, allocation, checkins, addCheckin, setActive
           {allocation ? (
             <AllocationPieChart data={allocation} />
           ) : (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-10 text-center space-y-3">
+            <div className="backdrop-blur-lg bg-zinc-900/55 border border-zinc-800/80 rounded-2xl p-10 text-center space-y-3">
               <p className="text-zinc-400 text-sm">
                 {language === 'vi' ? 'Bạn chưa kiến tạo danh mục phân bổ tài sản thông minh.' : 'You have not initialized a smart asset allocation portfolio yet.'}
               </p>
@@ -173,7 +173,7 @@ export function Dashboard({ profile, allocation, checkins, addCheckin, setActive
         <div className="lg:col-span-1 space-y-6">
           
           {/* New Monthly Checkin Form Widget */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-4">
+          <div className="backdrop-blur-lg bg-zinc-900/55 border border-zinc-800/80 rounded-2xl p-5 space-y-4 shadow-lg shadow-black/5">
             <h4 className="text-zinc-100 font-bold text-sm flex items-center gap-2">
               <Wallet className="w-4 h-4 text-emerald-400" />
               {language === 'vi' ? 'Báo cáo Tài chính Tháng này' : "This Month's Financial Report"}
@@ -278,7 +278,7 @@ export function Dashboard({ profile, allocation, checkins, addCheckin, setActive
                 </p>
               ) : (
                 checkins.map((item) => (
-                  <div key={item.id} className="bg-zinc-950 border border-zinc-900 rounded-lg p-3.5 space-y-2.5">
+                  <div key={item.id} className="backdrop-blur-md bg-zinc-950/65 border border-zinc-900/80 rounded-xl p-3.5 space-y-2.5 hover:border-zinc-800/60 transition-all duration-200">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-3.5 h-3.5 text-indigo-400" />

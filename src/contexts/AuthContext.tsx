@@ -116,7 +116,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch (err: any) {
         const msg = err.message || '';
-        if (msg.includes('auth/operation-not-allowed') || msg.includes('operation-not-allowed')) {
+        const code = err.code || '';
+        if (msg.includes('auth/operation-not-allowed') || msg.includes('operation-not-allowed') || code.includes('operation-not-allowed')) {
           setError(
             '⚠️ Yêu cầu thao tác bổ sung:\n' +
             'Tính năng Email/Mật khẩu chưa được bật trên Firebase Console của dự án này.\n\n' +
@@ -124,8 +125,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             '• Cách 1: Click "Đăng nhập qua Google account" ngay bên dưới (phương thức này đã được thiết lập sẵn).\n' +
             '• Cách 2: Vào trang quản lý Firebase -> Authentication -> tab Sign-in method, sau đó bật "Email/Password".'
           );
+        } else if (msg.includes('auth/invalid-credential') || msg.includes('invalid-credential') || code.includes('invalid-credential')) {
+          setError(
+            '🔑 Email hoặc Mật khẩu không chính xác!\n\n' +
+            '💡 Hãy kiểm tra lại:\n' +
+            '• Bạn đã gõ đúng chữ hoa/thường hay chưa.\n' +
+            '• Nếu chưa có tài khoản, vui lòng bấm nút "Đăng ký tài khoản" ở dưới cùng để tạo tài khoản mới.'
+          );
+        } else if (msg.includes('auth/user-not-found') || msg.includes('user-not-found') || code.includes('user-not-found')) {
+          setError(
+            '✉️ Không tìm thấy tài khoản với email này.\n\n' +
+            '💡 Bạn vui lòng nhấp vào "Đăng ký tài khoản" ở dưới cùng để khởi tạo tài khoản mới!'
+          );
+        } else if (msg.includes('auth/wrong-password') || msg.includes('wrong-password') || code.includes('wrong-password')) {
+          setError('🔑 Mật khẩu bạn nhập không chính xác. Vui lòng thử lại!');
+        } else if (msg.includes('auth/invalid-email') || msg.includes('invalid-email') || code.includes('invalid-email')) {
+          setError('✉️ Địa chỉ email không đúng định dạng!');
+        } else if (msg.includes('auth/too-many-requests') || msg.includes('too-many-requests') || code.includes('too-many-requests')) {
+          setError('🔒 Thao tác quá nhanh hoặc bị khóa tạm thời do nhập sai nhiều lần. Hãy đăng nhập bằng Google hoặc thử lại sau ít phút!');
         } else {
-          setError(err.message || 'Lỗi tài khoản hoặc mật khẩu không chính xác.');
+          setError(err.message || 'Lỗi đăng nhập. Vui lòng kiểm tra lại tài khoản hoặc kết nối mạng.');
         }
         throw err;
       }
@@ -167,7 +186,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch (err: any) {
         const msg = err.message || '';
-        if (msg.includes('auth/operation-not-allowed') || msg.includes('operation-not-allowed')) {
+        const code = err.code || '';
+        if (msg.includes('auth/operation-not-allowed') || msg.includes('operation-not-allowed') || code.includes('operation-not-allowed')) {
           setError(
             '⚠️ Yêu cầu thao tác bổ sung:\n' +
             'Tính năng Email/Mật khẩu chưa được bật trên Firebase Console của dự án này.\n\n' +
@@ -175,6 +195,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             '• Cách 1: Click "Đăng nhập qua Google account" ngay bên dưới (phương thức này đã được thiết lập sẵn).\n' +
             '• Cách 2: Vào trang quản lý Firebase -> Authentication -> tab Sign-in method, sau đó bật "Email/Password".'
           );
+        } else if (msg.includes('auth/email-already-in-use') || msg.includes('email-already-in-use') || code.includes('email-already-in-use')) {
+          setError(
+            '✉️ Địa chỉ Email này đã được đăng ký tài khoản trước đó!\n\n' +
+            '💡 Giải pháp:\n' +
+            '• Vui lòng chuyển sang tab Đăng Nhập để truy cập tài khoản.\n' +
+            '• Hoặc chọn Đăng nhập bằng Google account.'
+          );
+        } else if (msg.includes('auth/weak-password') || msg.includes('weak-password') || code.includes('weak-password')) {
+          setError('🔒 Mật khẩu quá yếu! Vui lòng chọn mật khẩu tối thiểu 6 ký tự để bảo mật tối ưu.');
+        } else if (msg.includes('auth/invalid-email') || msg.includes('invalid-email') || code.includes('invalid-email')) {
+          setError('✉️ Định dạng Email không hợp lệ! Vui lòng kiểm tra lại cấu trúc email.');
         } else {
           setError(err.message || 'Đăng ký tài khoản không thành công. Hãy thử mật khẩu dài hơn.');
         }

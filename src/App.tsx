@@ -9,6 +9,7 @@ import { TopNav } from './components/layout/TopNav';
 import { useProfile } from './hooks/useProfile';
 import { useAuth } from './contexts/AuthContext';
 import { LoginScreen } from './components/auth/LoginScreen';
+import { BackgroundUniverse } from './components/shared/BackgroundUniverse';
 
 // Import newly created sub-pages
 import { Dashboard } from './pages/Dashboard';
@@ -122,7 +123,10 @@ export default function App() {
   };
 
   return (
-    <div className="flex bg-zinc-950 text-zinc-300 min-h-screen font-sans">
+    <div className="flex bg-zinc-950 text-zinc-300 min-h-screen font-sans relative overflow-hidden">
+      {/* 0. IMMERSIVE FINTECH COSMOS BACKGROUND */}
+      <BackgroundUniverse />
+
       {/* 1. Left Sidebar - Sticky & Desktop only */}
       <Sidebar
         activeTab={activeTab}
@@ -131,7 +135,7 @@ export default function App() {
       />
 
       {/* 2. Main Content Frame Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 relative z-10">
         
         {/* Top Navbar */}
         {profile && (

@@ -88,7 +88,7 @@ export function SideHustle({ profile, sideHustles, updateSideHustles }: SideHust
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Controls Column */}
-        <div className="lg:col-span-1 bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-4 shadow-xl">
+        <div className="lg:col-span-1 backdrop-blur-lg bg-zinc-900/55 border border-zinc-800/80 rounded-2xl p-5 space-y-4 shadow-xl">
           <h3 className="text-zinc-200 text-sm font-bold border-b border-zinc-850 pb-2.5 flex items-center gap-1.5">
             <Zap className="w-4 h-4 text-emerald-400" />
             Thiết lập đầu vào thu nhập phụ
@@ -182,7 +182,7 @@ export function SideHustle({ profile, sideHustles, updateSideHustles }: SideHust
                       return (
                         <div
                           key={index}
-                          className="bg-zinc-900 border border-zinc-800 hover:border-zinc-750 transition-all duration-200 rounded-lg p-5 space-y-4 flex flex-col justify-between"
+                          className="backdrop-blur-lg bg-zinc-900/55 border border-zinc-800/80 hover:border-zinc-700/60 transition-all duration-200 rounded-2xl p-5 space-y-4 flex flex-col justify-between shadow-lg"
                         >
                           {/* Title and Category Badge details */}
                           <div className="space-y-1.5">
@@ -258,7 +258,7 @@ export function SideHustle({ profile, sideHustles, updateSideHustles }: SideHust
                   </div>
                 </div>
               ) : (
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-16 text-center space-y-4 max-w-md mx-auto">
+                <div className="backdrop-blur-lg bg-zinc-900/55 border border-zinc-800/80 rounded-2xl p-16 text-center space-y-4 max-w-md mx-auto shadow-xl">
                   <Laptop className="w-10 h-10 text-emerald-400 mx-auto animate-pulse" />
                   <div className="space-y-1">
                     <h4 className="text-zinc-200 font-bold">Kích hoạt rổ kiến tạo thu nhập phụ</h4>

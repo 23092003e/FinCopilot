@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Menu, X, Flame, ShieldAlert, CheckCircle, LogOut, Sun, Moon, Globe } from 'lucide-react';
+import { Menu, X, Flame, ShieldAlert, CheckCircle, LogOut, Sun, Moon, Globe, Download } from 'lucide-react';
 import { Profile } from '../../lib/supabase/types';
 import { formatVND } from '../../lib/utils/vnd';
 import { useAuth } from '../../contexts/AuthContext';
@@ -18,7 +18,7 @@ interface TopNavProps {
 
 export function TopNav({ profile, activeTab, setActiveTab }: TopNavProps) {
   const { logout } = useAuth();
-  const { theme, language, toggleTheme, setLanguage, t } = useUI();
+  const { theme, language, toggleTheme, setLanguage, t, isInstallable, installPWA } = useUI();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const menuItems = [
@@ -85,6 +85,17 @@ export function TopNav({ profile, activeTab, setActiveTab }: TopNavProps) {
       <div className="flex items-center gap-3">
         {/* Toggle bars inside controls */}
         <div className="flex items-center gap-1.5 border-r border-zinc-800 pr-3.5">
+          {isInstallable && (
+            <button
+              onClick={installPWA}
+              className="mr-1.5 hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20 text-emerald-400 border border-emerald-500/30 hover:border-emerald-400/50 rounded-lg text-[11px] font-bold tracking-tight shadow-sm cursor-pointer transition-all animate-pulse"
+              title={t('pwa.install')}
+            >
+              <Download className="w-3.5 h-3.5 animate-bounce" />
+              <span>Install</span>
+            </button>
+          )}
+
           <button
             onClick={toggleTheme}
             type="button"
@@ -136,6 +147,23 @@ export function TopNav({ profile, activeTab, setActiveTab }: TopNavProps) {
               <p className="text-zinc-250 font-bold">{profile.full_name || 'FC'}</p>
             </div>
           </div>
+
+          {isInstallable && (
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                installPWA();
+              }}
+              className="w-full mb-3 flex items-center justify-between gap-2 px-3.5 py-3 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-400/30 rounded-lg text-xs font-bold text-emerald-400 shadow-sm cursor-pointer transition-all animate-pulse"
+            >
+              <div className="flex items-center gap-2">
+                <Download className="w-4 h-4 text-emerald-400 animate-bounce" />
+                <span className="text-zinc-100">{t('pwa.install')}</span>
+              </div>
+              <span className="text-[10px] text-emerald-500 font-mono">STANDALONE</span>
+            </button>
+          )}
+
           {menuItems.map((item) => (
             <button
               key={item.id}

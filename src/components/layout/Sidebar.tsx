@@ -14,6 +14,7 @@ import {
   Settings,
   Flame,
   LogOut,
+  Download,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
@@ -26,7 +27,7 @@ interface SidebarProps {
 
 export function Sidebar({ activeTab, setActiveTab, onboardingCompleted = true }: SidebarProps) {
   const { logout } = useAuth();
-  const { t } = useUI();
+  const { t, isInstallable, installPWA } = useUI();
   
   const menuItems = [
     { id: 'dashboard', langKey: 'nav.dashboard', icon: LayoutDashboard },
@@ -83,7 +84,17 @@ export function Sidebar({ activeTab, setActiveTab, onboardingCompleted = true }:
       </nav>
 
       {/* Sign Out Button and Foot Credits */}
-      <div className="p-4 border-t border-zinc-900/60 space-y-3.5">
+      <div className="p-4 border-t border-zinc-900/60 space-y-3">
+        {isInstallable && (
+          <button
+            onClick={installPWA}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 hover:from-emerald-500/20 hover:to-teal-500/20 border border-emerald-500/30 hover:border-emerald-400/50 rounded-lg text-xs font-bold text-emerald-400 cursor-pointer shadow-emerald-500/5 shadow-[0_0_15px_rgba(16,185,129,0.15)] transition-all animate-pulse"
+          >
+            <Download className="w-3.5 h-3.5 animate-bounce" />
+            <span>{t('pwa.install')}</span>
+          </button>
+        )}
+
         <button
           onClick={logout}
           className="w-full flex items-center justify-center gap-2 px-3 py-2 border border-zinc-900 hover:bg-zinc-900 rounded-lg text-xs font-bold text-red-400 hover:text-red-300 transition-all cursor-pointer"

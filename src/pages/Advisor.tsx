@@ -113,7 +113,7 @@ export function Advisor({ profile, allocation, updateAllocation }: AdvisorProps)
               <div className="lg:col-span-1 space-y-4">
                 
                 {/* Overall advice paragraph */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-3 shadow">
+                <div className="backdrop-blur-lg bg-zinc-900/55 border border-zinc-800/80 rounded-2xl p-5 space-y-3 shadow-lg shadow-black/5">
                   <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono font-bold block">Tổng quan chiến lược</span>
                   <p className="text-zinc-100 font-semibold text-sm leading-normal">
                     Phần bổ cơ cấu tài chính khuyên lập
@@ -169,7 +169,7 @@ export function Advisor({ profile, allocation, updateAllocation }: AdvisorProps)
                   return (
                     <div
                       key={key}
-                      className="bg-zinc-900 border border-zinc-800 rounded-lg p-4.5 flex items-start gap-4 hover:border-zinc-700 transition-all duration-200"
+                      className="backdrop-blur-lg bg-zinc-900/55 border border-zinc-800/80 rounded-2xl p-4.5 flex items-start gap-4 hover:border-zinc-700/60 transition-all duration-200 shadow-md"
                     >
                       <div className={`p-2.5 rounded-lg shrink-0 ${colors.bg}`}>
                         <CatIcon className={`w-5 h-5 ${colors.text}`} />
@@ -194,7 +194,7 @@ export function Advisor({ profile, allocation, updateAllocation }: AdvisorProps)
 
             </div>
           ) : (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-12 text-center max-w-md mx-auto space-y-4">
+            <div className="backdrop-blur-lg bg-zinc-900/55 border border-zinc-800/80 rounded-2xl p-12 text-center max-w-md mx-auto space-y-4 shadow-xl">
               <Sparkles className="w-10 h-10 text-emerald-400 mx-auto animate-pulse" />
               <div className="space-y-1">
                 <h4 className="text-zinc-200 font-bold">Khởi tạo danh mục khuyên dùng</h4>

@@ -14,6 +14,8 @@ interface UIContextType {
   toggleTheme: () => void;
   setLanguage: (lang: Language) => void;
   t: (key: string) => string;
+  isInstallable: boolean;
+  installPWA: () => Promise<void>;
 }
 
 const UIContext = createContext<UIContextType | undefined>(undefined);
@@ -26,6 +28,10 @@ export const useUI = () => {
 
 const TRANSLATIONS: Record<Language, Record<string, string>> = {
   vi: {
+    // PWA Items
+    'pwa.install': 'Cài đặt Ứng dụng',
+    'pwa.install_desc': 'Tải FinCopilot về thiết bị của bạn để truy cập cực nhanh, mượt mà và hỗ trợ ngoại tuyến.',
+    'pwa.installed': 'Đã cài đặt thành công!',
     // Nav Items
     'nav.dashboard': 'Bảng Điều Khiển',
     'nav.advisor': 'Co-Pilot Phân Bổ',
@@ -102,6 +108,10 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'sidehustle.desc': ' AI đề xuất công việc phụ (Side Hustle) tạo dòng tiền tăng vốn tích lũy tăng trưởng nhanh.',
   },
   en: {
+    // PWA Items
+    'pwa.install': 'Install Application',
+    'pwa.install_desc': 'Download FinCopilot to your device for instant launch, custom look and offline support.',
+    'pwa.installed': 'Installed successfully!',
     // Nav Items
     'nav.dashboard': 'Dashboard',
     'nav.advisor': 'Asset Co-Pilot',
@@ -188,6 +198,56 @@ export const UIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
     return (localStorage.getItem('fincopilot_language') as Language) || 'vi';
   });
 
+  // PWA installer state
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstallable, setIsInstallable] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      // Prevent Chrome 67 and earlier from automatically showing the prompt
+      e.preventDefault();
+      // Stash the event so it can be triggered later.
+      setDeferredPrompt(e);
+      // Update UI notify the user they can install the PWA
+      setIsInstallable(true);
+    };
+
+    const handleAppInstalled = () => {
+      setIsInstallable(false);
+      setDeferredPrompt(null);
+      console.log('[PWA] FinCopilot was installed.');
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    // Check if app is already running in standalone mode (installed)
+    if (window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone) {
+      setIsInstallable(false);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const installPWA = async () => {
+    if (!deferredPrompt) {
+      console.log('[PWA] Installation prompt is not deferred yet.');
+      return;
+    }
+    // Show the prompt
+    deferredPrompt.prompt();
+    // Wait for the user to respond to the prompt
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`[PWA] User response to install prompt: ${outcome}`);
+    if (outcome === 'accepted') {
+      setIsInstallable(false);
+      setDeferredPrompt(null);
+    }
+  };
+
   // Apply theme to document documentElement
   useEffect(() => {
     const root = window.document.documentElement;
@@ -216,7 +276,7 @@ export const UIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   };
 
   return (
-    <UIContext.Provider value={{ theme, language, toggleTheme, setLanguage, t }}>
+    <UIContext.Provider value={{ theme, language, toggleTheme, setLanguage, t, isInstallable, installPWA }}>
       {children}
     </UIContext.Provider>
   );

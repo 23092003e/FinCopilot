@@ -1,0 +1,91 @@
+{
+  "entities": {
+    "profile": {
+      "title": "UserProfile",
+      "description": "User business and financial profile configuration",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "full_name": { "type": "string" },
+        "career_field": { "type": "string" },
+        "monthly_income_vnd": { "type": "integer" },
+        "monthly_expenses_vnd": { "type": "integer" },
+        "total_savings_vnd": { "type": "integer" },
+        "has_emergency_fund": { "type": "boolean" },
+        "emergency_fund_months": { "type": "integer" },
+        "has_debt": { "type": "boolean" },
+        "debt_amount_vnd": { "type": "integer" },
+        "has_insurance": { "type": "boolean" },
+        "risk_tolerance": { "type": "string" },
+        "investment_knowledge": { "type": "string" },
+        "skills": { "type": "array" },
+        "financial_goals": { "type": "array" },
+        "onboarding_completed": { "type": "boolean" },
+        "created_at": { "type": "string" },
+        "updated_at": { "type": "string" }
+      },
+      "required": ["id", "full_name", "onboarding_completed"]
+    },
+    "allocation": {
+      "title": "AssetAllocation",
+      "description": "Smart financial recommendation asset allocation",
+      "type": "object",
+      "properties": {
+        "monthly_savings_vnd": { "type": "integer" },
+        "allocated_categories": { "type": "object" },
+        "last_updated": { "type": "string" }
+      },
+      "required": ["monthly_savings_vnd", "allocated_categories"]
+    },
+    "checkin": {
+      "title": "MonthlyCheckin",
+      "description": "Monthly financial execution check-in log",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "month_year": { "type": "string" },
+        "income_vnd": { "type": "integer" },
+        "expenses_vnd": { "type": "integer" },
+        "invested_vnd": { "type": "integer" },
+        "notes": { "type": "string" },
+        "ai_review": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "user_id", "month_year", "income_vnd", "expenses_vnd"]
+    },
+    "sideHustle": {
+      "title": "SideHustleIdea",
+      "description": "Recommended AI side hustles for maximizing income streams",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "difficulty": { "type": "string" },
+        "est_income": { "type": "string" },
+        "time_required": { "type": "string" },
+        "description": { "type": "string" },
+        "steps": { "type": "array" }
+      },
+      "required": ["id", "title", "difficulty", "description"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "profile",
+      "description": "Main user demographic profile"
+    },
+    "/users/{userId}/allocations/{allocationId}": {
+      "schema": "allocation",
+      "description": "Historic active investment asset distributions"
+    },
+    "/users/{userId}/checkins/{checkinId}": {
+      "schema": "checkin",
+      "description": "Periodic actual logs of financial status and milestones"
+    },
+    "/users/{userId}/sideHustles/{sideHustleId}": {
+      "schema": "sideHustle",
+      "description": "Curated or generated side income activities"
+    }
+  }
+}

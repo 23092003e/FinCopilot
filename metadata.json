@@ -1,0 +1,6 @@
+{
+  "name": "FinCopilot",
+  "description": "AI Financial Co-pilot for Vietnamese Young Professionals",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

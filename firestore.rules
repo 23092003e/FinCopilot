@@ -1,0 +1,85 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 1. Global safety net - Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Hardened Global Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Strict profile validation pattern
+    function isValidProfile(profile) {
+      return profile.keys().hasAll(['id', 'full_name', 'onboarding_completed']) &&
+             profile.id is string &&
+             profile.id.size() <= 128 &&
+             profile.full_name is string &&
+             profile.full_name.size() <= 100 &&
+             profile.onboarding_completed is bool;
+    }
+
+    // Strict allocation validation pattern
+    function isValidAllocation(alloc) {
+      return alloc.keys().hasAll(['monthly_savings_vnd', 'allocated_categories']) &&
+             alloc.monthly_savings_vnd is int &&
+             alloc.allocated_categories is map;
+    }
+
+    // Strict checkin validation pattern
+    function isValidCheckin(checkin) {
+      return checkin.keys().hasAll(['id', 'user_id', 'month_year', 'income_vnd', 'expenses_vnd']) &&
+             checkin.id is string &&
+             checkin.id.size() <= 128 &&
+             checkin.user_id is string &&
+             checkin.month_year is string &&
+             checkin.income_vnd is int &&
+             checkin.expenses_vnd is int;
+    }
+
+    // Users Collection and Subcollections Matching
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidProfile(request.resource.data) && request.resource.data.id == userId;
+      allow update: if isOwner(userId) && isValidProfile(request.resource.data) && request.resource.data.id == userId;
+      allow delete: if isOwner(userId);
+
+      // Allocations Subcollection
+      match /allocations/{allocationId} {
+        allow get: if isOwner(userId) && isValidId(allocationId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(allocationId) && isValidAllocation(request.resource.data);
+        allow update: if isOwner(userId) && isValidId(allocationId) && isValidAllocation(request.resource.data);
+        allow delete: if isOwner(userId) && isValidId(allocationId);
+      }
+
+      // Checkins Subcollection
+      match /checkins/{checkinId} {
+        allow get: if isOwner(userId) && isValidId(checkinId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(checkinId) && isValidCheckin(request.resource.data) && request.resource.data.user_id == userId;
+        allow update: if isOwner(userId) && isValidId(checkinId) && isValidCheckin(request.resource.data) && request.resource.data.user_id == userId;
+        allow delete: if isOwner(userId) && isValidId(checkinId);
+      }
+
+      // Side Hustles Subcollection
+      match /sideHustles/{sideHustleId} {
+        allow get: if isOwner(userId) && isValidId(sideHustleId);
+        allow list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(sideHustleId) && request.resource.data.title is string && request.resource.data.title.size() <= 200;
+        allow delete: if isOwner(userId) && isValidId(sideHustleId);
+      }
+    }
+  }
+}

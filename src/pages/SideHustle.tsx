@@ -71,7 +71,66 @@ export function SideHustle({ profile, sideHustles, updateSideHustles }: SideHust
       updateSideHustles(data.ideas || []);
     } catch (err: any) {
       console.warn(err);
-      setErrorMsg('Không thể tiếp nối đến Co-pilot. Vui lòng thử lại sau.');
+      setErrorMsg('Không thể tiếp nối đến Co-pilot. Hệ thống đã kích hoạt rổ ý tưởng phụ cục bộ dự phòng cho bạn.');
+      const fallbackIdeas: SideHustleIdea[] = [
+        {
+          title: 'Tự động hóa Quy trình Bán hàng cho Doanh nghiệp vừa và nhỏ',
+          category: 'ai_automation',
+          description: 'Thiết kế hệ thống CRM tự động và chatbot AI tích hợp Zalo cho các shop bán lẻ nội địa.',
+          estimated_monthly_vnd: [5000000, 15000000],
+          time_to_first_revenue_weeks: 4,
+          difficulty: 'medium',
+          first_steps: [
+            'Học cơ bản sử dụng Make.com và n8n để liên kết Zalo API.',
+            'Tự dựng 1 case study chatbot giúp chốt đơn nháp.',
+            'Chào bán dịch vụ thử nghiệm giá rẻ cho 2-3 cửa hàng của người quen.'
+          ],
+          tools_needed: ['n8n', 'Make.com', 'Zalo OA', 'ChatGPT API']
+        },
+        {
+          title: 'Viết Bản tin Chuyên môn Substack dựa trên kỹ năng của bạn',
+          category: 'digital_product',
+          description: 'Chia sẻ kiến thức chuyên sâu, mẹo thực chiến và xu hướng thị trường hàng tuần dành cho các newbie Việt.',
+          estimated_monthly_vnd: [2000000, 8000000],
+          time_to_first_revenue_weeks: 8,
+          difficulty: 'low',
+          first_steps: [
+            'Tạo một trang tin Substack miễn phí.',
+            'Viết liên tục 5 bài viết chuyên sâu có chất lượng học thuật cao.',
+            'Chia sẻ lên các group Facebook và LinkedIn để tích lũy 200 subscribers đầu tiên.'
+          ],
+          tools_needed: ['Substack', 'Canva', 'Markdown Editors']
+        },
+        {
+          title: 'Thiết kế UI/UX Landing Page hoặc Slide trọn gói cho Brand local',
+          category: 'freelance',
+          description: 'Cung cấp dịch vụ tối ưu tỷ lệ chuyển đổi Landing page và làm mới giao diện bản chào hoặc web bán hàng.',
+          estimated_monthly_vnd: [7000000, 20000000],
+          time_to_first_revenue_weeks: 3,
+          difficulty: 'medium',
+          first_steps: [
+            'Dựng portfolio gồm 3 bản thiết kế bản chào demo tiện ích hoặc giao diện mẫu.',
+            'Tạo profile uy tín trên Behance và các sàn làm việc tự do Việt Nam như vLance.',
+            'Pitching trực tiếp kế hoạch tối ưu cho các nhãn hàng nhỏ đang có hiển thị cũ kỹ.'
+          ],
+          tools_needed: ['Figma', 'Framer', 'Webflow', 'Canva']
+        },
+        {
+          title: 'Phát triển Template Notion quản lý KPI & Tài chính chi tiết',
+          category: 'digital_product',
+          description: 'Sáng tạo các bảng biểu tinh lọc cho đối tượng sinh viên và người đi làm bận rộn tiện tra cứu và tối ưu ngày.',
+          estimated_monthly_vnd: [3000000, 10000000],
+          time_to_first_revenue_weeks: 5,
+          difficulty: 'low',
+          first_steps: [
+            'Dựng hệ thống theo dõi trực quan liên quan đến dòng tiền cá nhân hoặc mục tiêu KPI ngày.',
+            'Quay video hướng dẫn hoặc tài liệu sử dụng ngắn, rõ ràng.',
+            'Phân phối miễn phí lấy email đầu tiên trên Gumroad, sau đó chuyển sang bản trả phí trên các hội thảo.'
+          ],
+          tools_needed: ['Notion', 'Loom', 'Gumroad']
+        }
+      ];
+      updateSideHustles(fallbackIdeas);
     } finally {
       setLoading(false);
     }

@@ -65,13 +65,99 @@ export function Advisor({ profile, allocation, updateAllocation }: AdvisorProps)
       updateAllocation(data);
     } catch (err: any) {
       console.warn(err);
-      setErrorMsg('Không thể kết nối đến Co-pilot. Đang sử dụng cơ chế nội suy phòng vệ dự phòng...');
+      setErrorMsg('Không thể kết nối đến AI. Đang sử dụng cơ chế tính toán nội suy phòng vệ dự phòng...');
       
       // Delay so loader feels realistic before fallback is computed as contingency plan
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 800));
       
-      // Use fallback logic by calling local endpoint
-      // We can do a robust client side allocation fallback inside Advisor as well!
+      // Smart Fallback Engine in client side
+      const totalSavings = Number(profile.total_savings_vnd || 0);
+      const monthlyExpenses = Number(profile.monthly_expenses_vnd || 0);
+      const hasDebt = !!profile.has_debt;
+      const debtAmount = Number(profile.debt_amount_vnd || 0);
+      const risk = profile.risk_tolerance || 'moderate';
+      const career = profile.career_field || 'other';
+
+      const emergencyFundMonths = monthlyExpenses > 0 ? (totalSavings / monthlyExpenses) : 0;
+      
+      let emergency_pct = 15;
+      let etf_pct = 30;
+      let self_pct = 20;
+      let business_pct = 15;
+      let cash_pct = 20;
+      const warnings: string[] = [];
+
+      // Prerequisite 1: Emergency Fund below 3 months
+      if (emergencyFundMonths < 3) {
+        emergency_pct = 45;
+        warnings.push('Cảnh báo: Quỹ dự phòng hiện tại của bạn dưới 3 tháng chi tiêu. Hãy tập trung tích lũy cho quỹ dự phòng vệ trước khi mang đi đầu tư mạo hiểm.');
+      }
+
+      // Debt influence
+      if (hasDebt && debtAmount > 0) {
+        warnings.push(`Khuyên dùng: Bạn đang có khoản nợ trị giá ${debtAmount.toLocaleString('vi-VN')} ₫. Nếu đây là nợ lãi suất cao (>8%/năm), hãy trích tiền mặt từ tiết kiệm trả dứt điểm sớm.`);
+      }
+
+      // Risk profiling adjustments
+      if (risk === 'conservative') {
+        etf_pct = Math.max(10, etf_pct - 15);
+        cash_pct = Math.min(50, cash_pct + 15);
+      } else if (risk === 'aggressive') {
+        etf_pct = Math.min(55, etf_pct + 15);
+        cash_pct = Math.max(5, cash_pct - 15);
+      }
+
+      // Career profiling adjustment
+      if (career === 'software' || career === 'ai_ml') {
+        self_pct = Math.min(30, self_pct + 5);
+        cash_pct = Math.max(5, cash_pct - 5);
+      }
+
+      // Normalize total to 100%
+      const total = emergency_pct + etf_pct + self_pct + business_pct + cash_pct;
+      const factor = 100 / total;
+
+      const norm_emergency = Math.round(emergency_pct * factor);
+      const norm_etf = Math.round(etf_pct * factor);
+      const norm_self = Math.round(self_pct * factor);
+      const norm_business = Math.round(business_pct * factor);
+      const norm_cash = 100 - (norm_emergency + norm_etf + norm_self + norm_business);
+
+      const localFallback: AllocationResponse = {
+        allocation: {
+          emergency_fund: {
+            pct: norm_emergency,
+            amount_vnd: Math.round(totalSavings * (norm_emergency / 100)),
+            reasoning: 'Ưu tiên tối đa cho quỹ dự phòng giúp duy trì tính bảo vệ, tính linh hoạt và đệm thanh khoản vững vàng.',
+          },
+          etf_dca: {
+            pct: norm_etf,
+            amount_vnd: Math.round(totalSavings * (norm_etf / 100)),
+            reasoning: 'Chiến thuật DCA ổn định rổ chỉ số VN30 hoặc Quỹ mở trong nước giúp chống lạm phát và kiến tạo giá trị tăng trưởng ròng.',
+          },
+          self_investment: {
+            pct: norm_self,
+            amount_vnd: Math.round(totalSavings * (norm_self / 100)),
+            reasoning: 'Đầu tư mở rộng kỹ năng bản thân, học tập khóa học chuyên môn cao hoặc lấy chứng chỉ giúp đổi màu thu nhập gốc nhanh nhất.',
+          },
+          business_capital: {
+            pct: norm_business,
+            amount_vnd: Math.round(totalSavings * (norm_business / 100)),
+            reasoning: 'Vốn dự trữ an toàn cho các hoạt động khởi tạo dự án thu nhập phụ Side Hustle hoặc Freelance chủ động.',
+          },
+          cash_reserve: {
+            pct: norm_cash,
+            amount_vnd: Math.round(totalSavings * (norm_cash / 100)),
+            reasoning: 'Duy trì thanh khoản tiền mặt chờ các điểm chiết khấu hấp dẫn của thị trường cổ phiếu để gia tăng hiệu quả tích sản.',
+          },
+        },
+        overall_reasoning: `Báo cáo phân bổ này được tính toán cục bộ dựa trên hệ số khẩu vị rủi ro '${risk}' và đặc trưng nghề nghiệp '${career}' của bạn. Hệ thống khuyên dùng hướng tiếp cận cân bằng để tối ưu hóa an toàn.`,
+        risk_level: risk === 'aggressive' ? 'high' : risk === 'conservative' ? 'low' : 'moderate',
+        warnings,
+        opportunity_cost: 'Nếu duy trì tiền nhàn rỗi toàn bộ trong ngân hàng thông thường với lãi suất thấp, bạn sẽ bỏ lỡ sức mạnh kép từ rổ chỉ số chứng khoán VN30 dài hạn (lịch sử ~10-12%/năm) và cơ hội phát triển sớm.',
+      };
+
+      updateAllocation(localFallback);
     } finally {
       setLoading(false);
     }

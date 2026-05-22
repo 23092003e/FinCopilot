@@ -103,7 +103,40 @@ export function Dashboard({ profile, allocation, checkins, addCheckin, setActive
       setNotes('');
     } catch (err: any) {
       console.error(err);
-      setErrorReview(language === 'vi' ? 'Gặp sự cố kết nối tới Co-pilot. Vui lòng kiểm tra lại cấu hình.' : 'Co-pilot connection issues. Please check your configuration.');
+      
+      // Local fallback evaluation heuristic to ensure the report is saved successfully
+      const actualSavings = Number(parsedIncome || 0) - Number(parsedExpenses || 0);
+      const savingsRate = parsedIncome > 0 ? (actualSavings / parsedIncome) * 100 : 0;
+      let review = '';
+
+      if (savingsRate < 10) {
+        review = `* **Tỷ lệ tiết kiệm ở mức cảnh báo** (${savingsRate.toFixed(1)}%): Chi tiêu thực tế đang chiếm phần lớn thu nhập của bạn. Hãy rà soát lại các khoản chi không thiết yếu để giữ dòng tiền nhàn rỗi ở mức tối thiểu 20%.\n* **Duy trì kỷ luật đầu tư**: Tích sản định kỳ quyết định tất cả. Hãy trả cho bản thân trước bằng việc trích tiền DCA ngay khi nhận lương.\n* **Tổng kết (Ngoại tuyến)**: Có một số rò rỉ dòng tiền phụ, hãy thắt chặt ngân sách trong tháng tới nhé!`;
+      } else if (savingsRate < 30) {
+        review = `* **Tỷ lệ tích lũy ổn định** (${savingsRate.toFixed(1)}%): Bạn đang duy trì lối sống lành mạnh và kiểm soát chi tiêu ở mức khá tốt. Có thể nâng cao thêm 5% dòng tiền bằng cách cắt giảm chi nhỏ lẻ.\n* **Tích cực phân bổ ETF**: Việc giải ngân lượng tiền của bạn là một bước đi tuyệt vời. Hãy giữ vững sự kiên định qua các đợt biến động của chu kỳ thị trường.\n* **Chuyên môn (Ngoại tuyến)**: Tiếp tục tối ưu hóa thu nhập chính qua việc nâng cấp kỹ năng nghề nghiệp.`;
+      } else {
+        review = `* **Sức khỏe tài chính xuất sắc** (${savingsRate.toFixed(1)}% tỷ lệ tiết kiệm): Khả năng tiết kiệm tuyệt vời! Bạn đang đi trước tiến độ tự do tài chính dài hạn một cách ngoạn mục.\n* **Tích sản tối ưu**: Giải ngân hiệu quả giúp tận dụng lãi kép nhanh nhất. Tiếp tục giữ vững phong độ đỉnh cao này.\n* **Mẹo bổ trợ (Ngoại tuyến)**: Bạn có dư lượng thanh khoản dồi dào, hãy trích một góc nhỏ cho quỹ tự học hoặc thử nghiệm side hustle.`;
+      }
+
+      // Add actual check-in successfully offline
+      addCheckin(
+        {
+          month: new Date().toISOString().substring(0, 7), // YYYY-MM
+          income_actual_vnd: parsedIncome,
+          expenses_actual_vnd: parsedExpenses,
+          invested_amount_vnd: parsedInvested,
+          notes,
+          ai_review: review,
+        },
+        review
+      );
+
+      setErrorReview(language === 'vi' ? 'Kết nối tới AI gián đoạn. FinCopilot đã kích hoạt bộ quy chuẩn cơ số cục bộ để thẩm định dòng tiền và lưu trữ báo cáo thành công!' : 'AI connection issues. Generated offline fallback report assessment and saved checkin successfully!');
+
+      // Reset fields
+      setIncome('');
+      setExpenses('');
+      setInvested('');
+      setNotes('');
     } finally {
       setLoadingReview(false);
     }

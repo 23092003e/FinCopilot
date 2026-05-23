@@ -14,7 +14,7 @@ import { useUI } from '../contexts/UIContext';
 interface SettingsProps {
   profile: Profile;
   updateProfile: (profile: Partial<Profile>) => void;
-  resetAllData: () => void;
+  resetAllData: (wipeBlank?: boolean) => void;
 }
 
 export function Settings({ profile, updateProfile, resetAllData }: SettingsProps) {
@@ -70,10 +70,18 @@ export function Settings({ profile, updateProfile, resetAllData }: SettingsProps
     }, 1500);
   };
 
-  const handleReset = () => {
-    if (window.confirm(language === 'vi' ? 'Bạn có chắc chắn muốn xóa toàn bộ dữ liệu?' : 'Are you sure you want to reset all data?')) {
+  const handleReset = (wipeBlank: boolean) => {
+    const confirmMsg = wipeBlank
+      ? (language === 'vi' 
+          ? 'XÁC NHẬN: Bạn muốn XÓA SẠCH HOÀN TOÀN toàn bộ lịch sử giao dịch trong Sổ, nội dung check-in tự động, cấu trúc tài sản và thông tin thiết lập để tạo một tài khoản TRẮNG BẮT ĐẦU MỚI hoàn toàn?\n\n(Hành động này sẽ giải phóng 100% tài khoản của bạn để nhập dữ liệu thực tế)' 
+          : 'CONFIRM: Do you want to WIPE EVERYTHING completely? This will clear all transactions, check-ins, allocations, and user settings to start with an ABSOLUTE BLANK Slate.\n\n(Ideal for setting up your actual personal workspace)')
+      : (language === 'vi'
+          ? 'XÁC NHẬN: Bạn muốn đặt cấu trúc dữ liệu về trạng thái Mẫu Demo Nguyễn Minh Anh (đầy đủ lịch sử giao dịch, checkkin mẫu, biểu đồ đầy đủ)?'
+          : 'CONFIRM: Do you want to restore the comprehensive Demo template data (Nguyễn Minh Anh profile, sample ledger list, and full charts setup) for quick exploration?');
+
+    if (window.confirm(confirmMsg)) {
       setResettingStatus(true);
-      resetAllData();
+      resetAllData(wipeBlank);
       setTimeout(() => {
         setResettingStatus(false);
         window.location.reload();
@@ -284,19 +292,58 @@ export function Settings({ profile, updateProfile, resetAllData }: SettingsProps
         <div>
           <h4 className="text-red-400 font-bold text-sm flex items-center gap-2">
             <RotateCcw className="w-4 h-4" />
-            {language === 'vi' ? 'Vùng nguy hiểm' : 'Danger Zone'}
+            {language === 'vi' ? 'Vùng nguy hiểm (Danger Zone)' : 'Danger Zone'}
           </h4>
           <p className="text-zinc-500 text-xs mt-1">
-            {t('setting.reset_desc')}
+            {language === 'vi'
+              ? 'Thực hiện thao tác dọn dẹp cơ sở dữ liệu. Nhấp vào tùy chọn phù hợp để xóa sổ giao dịch hoặc nạp lại cấu trúc mẫu thử nghiệm.'
+              : 'Perform database cleanup operations. Choose the appropriate action below to either purge all records or reload demo mock data.'}
           </p>
         </div>
-        <button
-          onClick={handleReset}
-          disabled={resettingStatus}
-          className="py-2 px-5 bg-red-500/80 hover:bg-red-650 text-white font-bold rounded text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
-        >
-          {resettingStatus ? (language === 'vi' ? 'Đang dọn cấu hình...' : 'Cleaning configurations...') : t('setting.reset')}
-        </button>
+        
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            onClick={() => handleReset(true)}
+            disabled={resettingStatus}
+            className="flex-1 py-2.5 px-4 bg-red-650 hover:bg-red-600 text-white font-black rounded text-[11px] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm border border-red-500/25 active:scale-95"
+          >
+            {resettingStatus ? (
+              <span>{language === 'vi' ? 'Đang giải phóng bộ nhớ...' : 'Purging database...'}</span>
+            ) : (
+              <>
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>{language === 'vi' ? 'XÓA SẠCH TOÀN BỘ (Tài khoản TRẮNG)' : 'WIPE ABSOLUTELY CLEAN (Blank slate)'}</span>
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={() => handleReset(false)}
+            disabled={resettingStatus}
+            className="flex-1 py-2.5 px-4 bg-zinc-950 hover:bg-zinc-900 text-zinc-300 font-bold rounded text-[11px] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm border border-zinc-800 active:scale-95"
+          >
+            {resettingStatus ? (
+              <span>{language === 'vi' ? 'Khôi phục...' : 'Restoring...'}</span>
+            ) : (
+              <>
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>{language === 'vi' ? 'Khôi phục tài khoản DEMO' : 'Restore MOCK DEMO profile'}</span>
+              </>
+            )}
+          </button>
+        </div>
+        
+        <div className="bg-zinc-950/40 p-3 rounded border border-zinc-900 text-[10px] text-zinc-500 leading-normal font-medium">
+          {language === 'vi' ? (
+            <p>
+              💡 <strong className="text-zinc-400">Gợi ý phân biệt:</strong> Hãy chọn <span className="text-red-400">Xóa Sạch Toàn Bộ</span> nếu bạn muốn bắt đầu lưu dòng tiền thực tế của cá nhân bạn (Onboarding mới, 0 giao dịch). Chọn <span className="text-zinc-300">Khôi phục tài khoản DEMO</span> nếu bạn muốn lấy lại số liệu có sẵn của Nguyễn Minh Anh để vọc thử các tính năng biểu đồ, chatbot Telegram, cố vấn AI...
+            </p>
+          ) : (
+            <p>
+              💡 <strong className="text-zinc-400">Quick Guide:</strong> Select <span className="text-red-400">WIPE ABSOLUTELY CLEAN</span> to log your active personal finances (re-runs onboarding, 0 entries in ledger). Select <span className="text-zinc-300">Restore MOCK DEMO</span> if you just want to play around with ready-to-test charts, automated advisory, and Telegram webhooks.
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

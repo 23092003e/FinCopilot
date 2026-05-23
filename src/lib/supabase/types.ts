@@ -99,3 +99,15 @@ export interface Checkin {
   ai_review: string;
   created_at: string;
 }
+
+export interface Transaction {
+  id: string;
+  user_id: string;
+  type: 'income' | 'expense' | 'investment';
+  category: string;
+  amount_vnd: number;
+  description: string;
+  date: string; // YYYY-MM-DD
+  created_at: string;
+}
+

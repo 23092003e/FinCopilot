@@ -24,7 +24,74 @@ async function startServer() {
 
   app.use(express.json());
 
+  // In-memory store for pending webhook transactions (token -> transaction array)
+  const pendingWebhookTransactions: Record<string, any[]> = {};
+
   // === API ENDPOINTS ===
+
+  // Webhook Receiver from n8n / Telegram
+  app.post('/api/webhook/transaction', (req, res) => {
+    const token = (req.query.token as string) || (req.headers['x-webhook-token'] as string);
+    if (!token || token.length < 8) {
+      return res.status(401).json({ error: 'Token hợp lệ là bắt buộc (tối thiểu 8 ký tự).' });
+    }
+
+    const data = req.body;
+    const txs = Array.isArray(data) ? data : [data];
+    const added: any[] = [];
+
+    for (const item of txs) {
+      if (!item) continue;
+      const type = item.type;
+      const amount = Number(item.amount_vnd);
+
+      if (!['income', 'expense', 'investment'].includes(type) || isNaN(amount) || amount <= 0) {
+        continue; // Skip invalid elements
+      }
+
+      const tx = {
+        id: 'tx_web_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+        type,
+        category: item.category || (type === 'income' ? 'Lương chính' : type === 'expense' ? 'Ăn uống' : 'Chứng chỉ quỹ ETF'),
+        amount_vnd: amount,
+        description: item.description || 'Giao dịch Telegram',
+        date: item.date || new Date().toISOString().substring(0, 10),
+        created_at: new Date().toISOString()
+      };
+
+      if (!pendingWebhookTransactions[token]) {
+        pendingWebhookTransactions[token] = [];
+      }
+      pendingWebhookTransactions[token].push(tx);
+      added.push(tx);
+    }
+
+    if (added.length === 0) {
+      return res.status(400).json({ error: 'Không tìm thấy dữ liệu giao dịch hợp lệ. Cần có type (income/expense/investment) và amount_vnd > 0.' });
+    }
+
+    return res.json({ success: true, count: added.length, added });
+  });
+
+  // Fetch pending items for client UI
+  app.get('/api/webhook/pending', (req, res) => {
+    const token = req.query.token as string;
+    if (!token) {
+      return res.status(400).json({ error: 'Thiếu token xác thực.' });
+    }
+    const txs = pendingWebhookTransactions[token] || [];
+    return res.json({ transactions: txs });
+  });
+
+  // Clear pending items once loaded or manually dismissed
+  app.post('/api/webhook/clear', (req, res) => {
+    const token = (req.query.token as string) || (req.body.token as string);
+    if (!token) {
+      return res.status(400).json({ error: 'Thiếu token xác thực.' });
+    }
+    pendingWebhookTransactions[token] = [];
+    return res.json({ success: true });
+  });
 
   // 1. Allocation Advisor Endpoint
   app.post('/api/ai/allocate', async (req, res) => {
@@ -289,25 +356,60 @@ Ghi chú của người dùng: ${notes || 'Không có ghi chú'}`;
 
       // Smart heuristic fallback feedback in Vietnamese
       const actualSavings = Number(income || 0) - Number(expenses || 0);
-      const savingsRate = income > 0 ? (actualSavings / income) * 100 : 0;
+      const savingsRate = income > 0 ? (actualSavings / income) * 105 : 0; // standard calculation
+      const computedSavingsPct = income > 0 ? (actualSavings / income) * 100 : 0;
+      const computedInvestPct = income > 0 ? (invested / income) * 100 : 0;
+      
       let review = '';
 
-      if (savingsRate < 10) {
-        review = `* **Tỷ lệ tiết kiệm ở mức rủi ro** (${savingsRate.toFixed(1)}%): Chi tiêu thực tế đang chiếm phần lớn thu nhập của bạn. Hãy rà soát lại các khoản chi không thiết yếu (như ăn uống ngoài, mua sắm ngẫu hứng) để giữ dòng tiền nhàn rỗi ở mức tối thiểu 20%.
-* **Đầu tư tích lũy định kỳ**: Kỷ luật tích sản đóng vai trò quyết định. Đừng đợi đến cuối tháng mới đầu tư số còn lại; thay vào đó, áp dụng nguyên tắc "Trả cho bản thân trước" ngay khi nhận lương.
-* **Gia cố bệ đỡ**: Nếu quỹ dự phòng của bạn chưa đạt 3 tháng, hãy chuyển toàn bộ số tiết kiệm thừa của tháng này vào tài khoản gửi góp kỳ hạn ngắn trước khi đầu tư ETF chứng khoán.`;
-      } else if (savingsRate < 30) {
-        review = `* **Tỷ lệ tích lũy ổn định** (${savingsRate.toFixed(1)}%): Bạn đang duy trì lối sống lành mạnh và kiểm soát chi tiêu ở mức chấp nhận được. Có thể rà soát quỹ ngân sách để tối ưu thêm 5-10% dòng tiền chuyển vào tích sản.
-* **Tích cực phân bổ ETF**: Việc duy trì đầu tư ${invested.toLocaleString('vi-VN')} ₫ là một thói quen rất tốt giúp tài sản tăng trưởng kép bền vững. Hãy giữ vững sự kiên định qua các chu kỳ thị trường.
-* **Chú trọng đầu tư kỹ năng**: Giai đoạn này hãy dành tối thiểu 5% ngân sách cho việc cập nhật kiến thức, mua khóa học chuyên môn để gia tăng thu nhập chủ động.`;
+      if (computedSavingsPct < 15) {
+        review = `### 📊 CHỈ SỐ SỨC KHỎE DÒNG TIỀN
+*   **Tỷ lệ Tiết kiệm thực tế (Savings Rate):** ${computedSavingsPct.toFixed(1)}% - **CẦN CẢI THIỆN ĐỎ** (Dưới mục tiêu khuyến chuẩn 20%). Chi tiêu hiện tại đang hấp thụ gần hết thặng dư dòng tiền nhàn rỗi của bạn!
+*   **Tỷ số Tích sản (Investment Rate):** ${computedInvestPct.toFixed(1)}% - Đầu tư chưa được tối ưu hóa đồng đều.
+
+### 💡 INSIGHTS CHUYÊN SÂU & RÒ RỈ DÒNG TIỀN
+*   **Tầm soát Leakage:** Ghi nhận có dấu hiệu rò rỉ ngân sách không thiết yếu. Áp lực từ các chi phí sinh hoạt đang bào mòn đáng kể lượng tiền tích sản của bạn.
+*   **Trì trệ lãi kép:** Mức tích lũy mỏng làm chậm vận tốc phát triển của quỹ hưu trí và đệm an toàn dự phòng dài hạn.
+
+### 🛠️ KẾ HOẠCH HÀNH ĐỘNG TỐI ƯU
+1.  **Thắt chặt khẩn cấp:** Cắt bớt 10-15% chi phí ăn uống giải trí ngoài, xây dựng lộ trình chi tiêu theo hạn mức tuần nghiêm ngặt.
+2.  **Tiền định kỳ:** Thiết lập chế độ chuyển tích lũy tự động (DCA) sang các tài khoản tích hợp hoặc chứng chỉ quỹ ngay tại đầu tháng khi vừa nhận lương.`;
+      } else if (computedSavingsPct < 35) {
+        review = `### 📊 CHỈ SỐ SỨC KHỎE DÒNG TIỀN
+*   **Tỷ lệ Tiết kiệm thực tế (Savings Rate):** ${computedSavingsPct.toFixed(1)}% - **ỔN ĐỊNH VÀ AN TOÀN** (Đạt vùng tiêu chuẩn bền vững 20-30%).
+*   **Tỷ số Tích sản (Investment Rate):** ${computedInvestPct.toFixed(1)}% - Bạn đang có lộ trình kỷ luật giải ngân rất tích cực!
+
+### 💡 INSIGHTS CHUYÊN SÂU & RÒ RỈ DÒNG TIỀN
+*   **Bộ khung vững mạnh:** Khả năng quản trị thặng dư tốt, biết cách tối giản chi phí để giữ cho dòng tiền lưu chuyển hợp lý chống bào mòn lạm phát.
+*   **Gieo mầm lãi kép:** Số tiền giải ngân đầu tư đầu tư hằng tháng đang xúc tiến cấu trúc gia tài dài hạn phát triển theo chiều hướng tốt.
+
+### 🛠️ KẾ HOẠCH HÀNH ĐỘNG TỐI ƯU
+1.  **Duy trì nhịp tích:** Đều đặn giải ngân bằng phương pháp DCA tích lũy quỹ chỉ số, bỏ qua các nhịp dao động ngắn hạn của thị trường.
+2.  **Nâng cấp thu nhập:** Trích 5% tiết kiệm nhằm mục tiêu bồi dưỡng năng lực, học các kỹ năng Side Hustle công nghệ để nhân rộng thặng dư ròng hằng tháng.`;
       } else {
-        review = `* **Sức khỏe tài chính tuyệt vời** (${savingsRate.toFixed(1)}% tỷ lệ tiết kiệm): Bạn đang kiểm soát chi phí cực kỳ chặt chẽ hoặc có nguồn thu nhập vượt trội trong tháng này. Đây là điểm tựa vàng để bứt phá tự do tài chính.
-* **Đầu tư hiệu quả**: Bạn đã giải ngân ${invested.toLocaleString('vi-VN')} ₫. Với thói quen này, mục tiêu tự do tài chính dài hạn sẽ đến sớm hơn nhiều so với dự kiến.
-* **Tận dụng cơ hội**: Có thể cân cân nhắc chia nhỏ phần tích lũy dôi dư, một phần gia tăng tốc độ tích lũy ETF rổ VN30, phần còn lại lập quỹ vốn kinh doanh/side hustle bổ trợ.`;
+        review = `### 📊 CHỈ SỐ SỨC KHỎE DÒNG TIỀN
+*   **Tỷ lệ Tiết kiệm thực tế (Savings Rate):** ${computedSavingsPct.toFixed(1)}% - **XUẤT SẮC THƯỢNG HẠNG** (Vượt xa kỳ vọng tối ưu 30%).
+*   **Tỷ số Tích sản (Investment Rate):** ${computedInvestPct.toFixed(1)}% - Hiệu năng kiến thiết dồi dào, đẩy nhanh vòng quay tự chủ tài chính!
+
+### 💡 INSIGHTS CHUYÊN SÂU & RÒ RỈ DÒNG TIỀN
+*   **Hiệu quả vượt bậc:** Lối sống vô cùng kỷ luật kết lập dòng thu nhập cốt lõi phát triển tốt giúp bạn giữ lại lượng vốn nhàn rỗi dạt dào.
+*   **Lợi thế vị thế:** Bạn sở hữu nguồn đệm vững vàng, sẵn sàng nắm bắt khi thị trường tài sản định giá chiết khấu mạnh.
+
+### 🛠️ KẾ HOẠCH HÀNH ĐỘNG TỐI ƯU
+1.  **Tối đa hóa DCA:** Đảm bảo rải vốn mua theo tháng vào các rổ chứng chỉ quỹ dồi dào thanh khoản để hấp thụ biên lợi nhuận dài hạn ổn định (~10-12%/năm).
+2.  **Phân nhánh mạo hiểm:** Hãy trích một góc nhỏ vốn nhàn rỗi (5%) nghiên cứu chế tạo các hệ thống side hustle công nghệ hoặc startup nhỏ để bồi đắp nguồn lợi bổ trợ.`;
       }
 
       return res.json({ review });
     }
+  });
+
+  // Fallback for unmatched API routes to ensure they always return JSON instead of HTML index.html
+  app.all('/api/*', (req, res) => {
+    res.status(404).json({
+      error: `Endpoint ${req.method} ${req.path} not found.`,
+      help: 'Vui lòng kiểm tra lại đường dẫn API hoặc phương thức HTTP của bạn.'
+    });
   });
 
   // Serve static files / Vite middleware

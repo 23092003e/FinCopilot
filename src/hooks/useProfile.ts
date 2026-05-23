@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Profile, AllocationResponse, SideHustleIdea, Checkin } from '../lib/supabase/types';
+import { Profile, AllocationResponse, SideHustleIdea, Checkin, Transaction } from '../lib/supabase/types';
 
 // Standard high-quality presets for Vietnamese early-career professionals (e.g. tech engineer, age 27, saving 150M)
 const PRESET_PROFILE: Profile = {
@@ -91,6 +91,83 @@ const PRESET_CHECKINS: Checkin[] = [
   }
 ];
 
+// Initial preset transactions for the current month
+const getPresetTransactions = (userId: string = 'local_user_id'): Transaction[] => {
+  const currentYearMonth = new Date().toISOString().substring(0, 7); // e.g., "2026-05"
+  return [
+    {
+      id: 'tx1',
+      user_id: userId,
+      type: 'income',
+      category: 'Lương chính',
+      amount_vnd: 35000000,
+      description: 'Nhận lương tháng thực nhận sau thuế',
+      date: `${currentYearMonth}-05`,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'tx2',
+      user_id: userId,
+      type: 'income',
+      category: 'Làm thêm',
+      amount_vnd: 4500000,
+      description: 'Thanh toán freelance viết Landing Page',
+      date: `${currentYearMonth}-12`,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'tx3',
+      user_id: userId,
+      type: 'expense',
+      category: 'Nhà cửa & Tiện ích',
+      amount_vnd: 5500000,
+      description: 'Tiền thuê căn hộ và điện nước dịch vụ',
+      date: `${currentYearMonth}-10`,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'tx4',
+      user_id: userId,
+      type: 'expense',
+      category: 'Ăn uống',
+      amount_vnd: 2800000,
+      description: 'Đóng tiền ăn uống gia đình & siêu thị tuần',
+      date: `${currentYearMonth}-15`,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'tx5',
+      user_id: userId,
+      type: 'expense',
+      category: 'Giải trí & Mua sắm',
+      amount_vnd: 1200000,
+      description: 'Café & ăn uống liên hoan cuối tuần bè bạn',
+      date: `${currentYearMonth}-18`,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'tx6',
+      user_id: userId,
+      type: 'investment',
+      category: 'Chứng chỉ quỹ ETF',
+      amount_vnd: 12000000,
+      description: 'DCA mua Chứng chỉ quỹ ETF VN30 (E1VFVN30)',
+      date: `${currentYearMonth}-06`,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'tx7',
+      user_id: userId,
+      type: 'investment',
+      category: 'Tiết kiệm / Quỹ dự phòng',
+      amount_vnd: 3000000,
+      description: 'Tích lũy quỹ dự phòng an sinh xã hội',
+      date: `${currentYearMonth}-07`,
+      created_at: new Date().toISOString()
+    }
+  ];
+};
+
 export function useProfile(userId?: string) {
   const [profile, setProfileState] = useState<Profile>(() => {
     const key = userId ? `fincopilot_${userId}_profile` : 'fincopilot_profile';
@@ -122,6 +199,12 @@ export function useProfile(userId?: string) {
     return saved ? JSON.parse(saved) : null;
   });
 
+  const [transactions, setTransactionsState] = useState<Transaction[]>(() => {
+    const key = userId ? `fincopilot_${userId}_transactions` : 'fincopilot_transactions';
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : getPresetTransactions(userId);
+  });
+
   // Track switching of users and reload their storage instantly
   useEffect(() => {
     const key_profile = userId ? `fincopilot_${userId}_profile` : 'fincopilot_profile';
@@ -129,12 +212,14 @@ export function useProfile(userId?: string) {
     const key_hustles = userId ? `fincopilot_${userId}_side_hustles` : 'fincopilot_side_hustles';
     const key_checkins = userId ? `fincopilot_${userId}_checkins` : 'fincopilot_checkins';
     const key_dca = userId ? `fincopilot_${userId}_dca_simulation` : 'fincopilot_dca_simulation';
+    const key_tx = userId ? `fincopilot_${userId}_transactions` : 'fincopilot_transactions';
 
     const p = localStorage.getItem(key_profile);
     const a = localStorage.getItem(key_allocation);
     const h = localStorage.getItem(key_hustles);
     const c = localStorage.getItem(key_checkins);
     const d = localStorage.getItem(key_dca);
+    const tx = localStorage.getItem(key_tx);
 
     if (p) {
       setProfileState(JSON.parse(p));
@@ -172,6 +257,7 @@ export function useProfile(userId?: string) {
     setSideHustlesState(h ? JSON.parse(h) : []);
     setCheckinsState(c ? JSON.parse(c) : (userId ? [] : PRESET_CHECKINS));
     setDcaSimulationState(d ? JSON.parse(d) : null);
+    setTransactionsState(tx ? JSON.parse(tx) : getPresetTransactions(userId));
   }, [userId]);
 
   // Sync state changes with localStorage
@@ -218,19 +304,36 @@ export function useProfile(userId?: string) {
     });
   };
 
-  const resetAllData = () => {
-    const prefixes = userId ? [`fincopilot_${userId}_`] : ['fincopilot_'];
-    prefixes.forEach((pref) => {
-      localStorage.removeItem(`${pref}profile`);
-      localStorage.removeItem(`${pref}allocation`);
-      localStorage.removeItem(`${pref}side_hustles`);
-      localStorage.removeItem(`${pref}checkins`);
-      localStorage.removeItem(`${pref}dca_simulation`);
+  const addTransaction = (tx: Omit<Transaction, 'id' | 'user_id' | 'created_at'>) => {
+    const newTx: Transaction = {
+      ...tx,
+      id: 'tx_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      user_id: userId || 'local_user_id',
+      created_at: new Date().toISOString()
+    };
+    setTransactionsState((prev) => {
+      const newList = [newTx, ...prev];
+      const key = userId ? `fincopilot_${userId}_transactions` : 'fincopilot_transactions';
+      localStorage.setItem(key, JSON.stringify(newList));
+      return newList;
     });
+  };
+
+  const deleteTransaction = (txId: string) => {
+    setTransactionsState((prev) => {
+      const newList = prev.filter(t => t.id !== txId);
+      const key = userId ? `fincopilot_${userId}_transactions` : 'fincopilot_transactions';
+      localStorage.setItem(key, JSON.stringify(newList));
+      return newList;
+    });
+  };
+
+  const resetAllData = (wipeBlank: boolean = true) => {
+    const pref = userId ? `fincopilot_${userId}_` : 'fincopilot_';
     
-    if (userId) {
-      setProfileState({
-        id: userId,
+    if (wipeBlank) {
+      const blankProfile: Profile = {
+        id: userId || 'local_user_id',
         full_name: '',
         career_field: null,
         monthly_income_vnd: 0,
@@ -248,17 +351,65 @@ export function useProfile(userId?: string) {
         onboarding_completed: false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      });
+      };
+
+      // Set explicit empty/clean states in localStorage to bypass default fallbacks
+      localStorage.setItem(`${pref}profile`, JSON.stringify(blankProfile));
+      localStorage.setItem(`${pref}allocation`, JSON.stringify(null));
+      localStorage.setItem(`${pref}side_hustles`, JSON.stringify([]));
+      localStorage.setItem(`${pref}checkins`, JSON.stringify([]));
+      localStorage.setItem(`${pref}transactions`, JSON.stringify([]));
+      localStorage.removeItem(`${pref}dca_simulation`);
+
+      setProfileState(blankProfile);
       setAllocationState(null);
       setSideHustlesState([]);
       setCheckinsState([]);
       setDcaSimulationState(null);
+      setTransactionsState([]);
     } else {
-      setProfileState({ ...PRESET_PROFILE, onboarding_completed: false, full_name: '' });
-      setAllocationState(null);
-      setSideHustlesState([]);
-      setCheckinsState([]);
-      setDcaSimulationState(null);
+      // Clear specific user settings to fall back to clean demo presets
+      localStorage.removeItem(`${pref}profile`);
+      localStorage.removeItem(`${pref}allocation`);
+      localStorage.removeItem(`${pref}side_hustles`);
+      localStorage.removeItem(`${pref}checkins`);
+      localStorage.removeItem(`${pref}transactions`);
+      localStorage.removeItem(`${pref}dca_simulation`);
+
+      if (userId) {
+        setProfileState({
+          id: userId,
+          full_name: 'Nguyễn Minh Anh',
+          career_field: 'software',
+          monthly_income_vnd: 35000000,
+          monthly_expenses_vnd: 15000000,
+          total_savings_vnd: 200000000,
+          has_emergency_fund: true,
+          emergency_fund_months: 4.5,
+          has_debt: true,
+          debt_amount_vnd: 25000000,
+          has_insurance: true,
+          risk_tolerance: 'moderate',
+          investment_knowledge: 'intermediate',
+          skills: ['React', 'TypeScript', 'Node.js', 'UI/UX Design'],
+          financial_goals: ['house_2years', 'early_retire', 'side_business'],
+          onboarding_completed: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+        setAllocationState(PRESET_ALLOCATION);
+        setSideHustlesState([]);
+        setCheckinsState(PRESET_CHECKINS);
+        setDcaSimulationState(null);
+        setTransactionsState(getPresetTransactions(userId));
+      } else {
+        setProfileState(PRESET_PROFILE);
+        setAllocationState(PRESET_ALLOCATION);
+        setSideHustlesState([]);
+        setCheckinsState(PRESET_CHECKINS);
+        setDcaSimulationState(null);
+        setTransactionsState(getPresetTransactions());
+      }
     }
   };
 
@@ -268,11 +419,14 @@ export function useProfile(userId?: string) {
     sideHustles,
     checkins,
     dcaSimulation,
+    transactions,
     updateProfile,
     updateAllocation,
     updateSideHustles,
     saveDCASimulation,
     addCheckin,
+    addTransaction,
+    deleteTransaction,
     resetAllData,
   };
 }

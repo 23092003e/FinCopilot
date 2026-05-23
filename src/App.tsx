@@ -19,6 +19,7 @@ import { Simulator } from './pages/Simulator';
 import { Scenarios } from './pages/Scenarios';
 import { SideHustle } from './pages/SideHustle';
 import { Settings } from './pages/Settings';
+import { Ledger } from './pages/Ledger';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -27,10 +28,13 @@ export default function App() {
     allocation,
     sideHustles,
     checkins,
+    transactions,
     updateProfile,
     updateAllocation,
     updateSideHustles,
     addCheckin,
+    addTransaction,
+    deleteTransaction,
     resetAllData,
   } = useProfile(user?.uid);
 
@@ -71,6 +75,7 @@ export default function App() {
             checkins={checkins}
             addCheckin={addCheckin}
             setActiveTab={setActiveTab}
+            transactions={transactions}
           />
         );
       case 'onboarding':
@@ -87,6 +92,17 @@ export default function App() {
             profile={profile}
             allocation={allocation}
             updateAllocation={updateAllocation}
+          />
+        );
+      case 'ledger':
+        return (
+          <Ledger
+            profile={profile}
+            transactions={transactions}
+            addTransaction={addTransaction}
+            deleteTransaction={deleteTransaction}
+            addCheckin={addCheckin}
+            setActiveTab={setActiveTab}
           />
         );
       case 'simulator':
@@ -117,6 +133,7 @@ export default function App() {
             checkins={checkins}
             addCheckin={addCheckin}
             setActiveTab={setActiveTab}
+            transactions={transactions}
           />
         );
     }
@@ -127,12 +144,15 @@ export default function App() {
       {/* 0. IMMERSIVE FINTECH COSMOS BACKGROUND */}
       <BackgroundUniverse />
 
-      {/* 1. Left Sidebar - Sticky & Desktop only */}
+      {/* 1. Left Sidebar - Fixed & Desktop only */}
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onboardingCompleted={profile ? profile.onboarding_completed : false}
       />
+
+      {/* Spacer to replicate fixed Sidebar columns flow */}
+      <div className="w-68 shrink-0 hidden md:block pointer-events-none" />
 
       {/* 2. Main Content Frame Area */}
       <div className="flex-1 flex flex-col min-w-0 relative z-10">

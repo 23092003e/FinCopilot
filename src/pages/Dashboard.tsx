@@ -3,16 +3,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { NetWorthChart } from '../components/charts/NetWorthChart';
 import { AllocationPieChart } from '../components/charts/AllocationPieChart';
 import { EmergencyFundAlert } from '../components/shared/EmergencyFundAlert';
 import { formatVND } from '../lib/utils/vnd';
 import { emergencyFundStatus } from '../lib/utils/finance';
-import { AllocationResponse, Checkin, Profile } from '../lib/supabase/types';
-import { Calendar, Wallet, TrendingUp, HandCoins, HelpCircle, Loader2 } from 'lucide-react';
+import { AllocationResponse, Checkin, Profile, Transaction } from '../lib/supabase/types';
+import { Calendar, Wallet, TrendingUp, HandCoins, HelpCircle, Loader2, Zap } from 'lucide-react';
 import { useUI } from '../contexts/UIContext';
+import Markdown from 'react-markdown';
 
 interface DashboardProps {
   profile: Profile;
@@ -20,9 +21,10 @@ interface DashboardProps {
   checkins: Checkin[];
   addCheckin: (checkin: Omit<Checkin, 'id' | 'created_at' | 'user_id'>, aiReview: string) => void;
   setActiveTab: (tab: string) => void;
+  transactions?: Transaction[];
 }
 
-export function Dashboard({ profile, allocation, checkins, addCheckin, setActiveTab }: DashboardProps) {
+export function Dashboard({ profile, allocation, checkins, addCheckin, setActiveTab, transactions = [] }: DashboardProps) {
   const { language, t } = useUI();
   // New check-in form state
   const [income, setIncome] = useState('');
@@ -32,19 +34,59 @@ export function Dashboard({ profile, allocation, checkins, addCheckin, setActive
   const [loadingReview, setLoadingReview] = useState(false);
   const [errorReview, setErrorReview] = useState('');
 
+  // Auto calculate and memoize monthly ledger aggregates
+  const currentMonthStr = useMemo(() => new Date().toISOString().substring(0, 7), []);
+  const ledgerValuesForMonth = useMemo(() => {
+    let inc = 0;
+    let exp = 0;
+    let inv = 0;
+    let count = 0;
+    transactions.forEach(t => {
+      if (t.date.startsWith(currentMonthStr)) {
+        count++;
+        if (t.type === 'income') inc += t.amount_vnd;
+        if (t.type === 'expense') exp += t.amount_vnd;
+        if (t.type === 'investment') inv += t.amount_vnd;
+      }
+    });
+    return { inc, exp, inv, count };
+  }, [transactions, currentMonthStr]);
+
   // Emergency status helper
   const fundStatus = emergencyFundStatus({
     currentFund: profile.has_emergency_fund ? (profile.emergency_fund_months * (profile.monthly_expenses_vnd || 10000000)) : 0,
     monthlyExpenses: profile.monthly_expenses_vnd,
   });
 
+  // Shorthand parser helper (e.g. 30m -> 30000000, 500k -> 500000)
+  const parseShorthandNumber = (val: string): number => {
+    if (!val) return 0;
+    let clean = val.trim().toLowerCase().replace(/\s/g, '').replace(/,/g, '.');
+    
+    const match = clean.match(/^([\d.]+)(k|m|b)?$/);
+    if (!match) {
+      const parsed = parseFloat(clean);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    
+    const num = parseFloat(match[1]);
+    const suffix = match[2];
+    if (isNaN(num)) return 0;
+    if (!suffix) return num;
+    
+    if (suffix === 'k') return num * 1000;
+    if (suffix === 'm') return num * 1000000;
+    if (suffix === 'b') return num * 1000000000;
+    return num;
+  };
+
   const handleAddCheckinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorReview('');
 
-    const parsedIncome = parseFloat(income);
-    const parsedExpenses = parseFloat(expenses);
-    const parsedInvested = parseFloat(invested);
+    const parsedIncome = parseShorthandNumber(income);
+    const parsedExpenses = parseShorthandNumber(expenses);
+    const parsedInvested = parseShorthandNumber(invested);
 
     if (isNaN(parsedIncome) || parsedIncome <= 0) {
       setErrorReview(language === 'vi' ? 'Vui lòng nhập thu nhập thực tế hợp lệ.' : 'Please enter a valid actual income.');
@@ -109,12 +151,42 @@ export function Dashboard({ profile, allocation, checkins, addCheckin, setActive
       const savingsRate = parsedIncome > 0 ? (actualSavings / parsedIncome) * 100 : 0;
       let review = '';
 
-      if (savingsRate < 10) {
-        review = `* **Tỷ lệ tiết kiệm ở mức cảnh báo** (${savingsRate.toFixed(1)}%): Chi tiêu thực tế đang chiếm phần lớn thu nhập của bạn. Hãy rà soát lại các khoản chi không thiết yếu để giữ dòng tiền nhàn rỗi ở mức tối thiểu 20%.\n* **Duy trì kỷ luật đầu tư**: Tích sản định kỳ quyết định tất cả. Hãy trả cho bản thân trước bằng việc trích tiền DCA ngay khi nhận lương.\n* **Tổng kết (Ngoại tuyến)**: Có một số rò rỉ dòng tiền phụ, hãy thắt chặt ngân sách trong tháng tới nhé!`;
-      } else if (savingsRate < 30) {
-        review = `* **Tỷ lệ tích lũy ổn định** (${savingsRate.toFixed(1)}%): Bạn đang duy trì lối sống lành mạnh và kiểm soát chi tiêu ở mức khá tốt. Có thể nâng cao thêm 5% dòng tiền bằng cách cắt giảm chi nhỏ lẻ.\n* **Tích cực phân bổ ETF**: Việc giải ngân lượng tiền của bạn là một bước đi tuyệt vời. Hãy giữ vững sự kiên định qua các đợt biến động của chu kỳ thị trường.\n* **Chuyên môn (Ngoại tuyến)**: Tiếp tục tối ưu hóa thu nhập chính qua việc nâng cấp kỹ năng nghề nghiệp.`;
+      if (savingsRate < 15) {
+        review = `### 📊 CHỈ SỐ SỨC KHỎE DÒNG TIỀN
+*   **Tỷ lệ Tiết kiệm thực tế (Savings Rate):** ${savingsRate.toFixed(1)}% - **CẦN CẢI THIỆN ĐỎ** (Dưới mục tiêu khuyến chuẩn 20%). Chi tiêu đang chiếm dụng quá nhiều thặng dư thanh khoản!
+*   **Tỷ số Tích sản (Investment Rate):** ${((parsedInvested / (parsedIncome || 1)) * 100).toFixed(1)}% - Đầu tư kỷ luật cần được thiết lập ổn định hơn hằng tháng.
+
+### 💡 INSIGHTS CHUYÊN SÂU & RÒ RỈ DÒNG TIỀN
+*   **Kiểm soát rò rỉ:** Phân kỳ chi tiêu tháng này cho thấy các dòng rò rỉ mua sắm nhỏ lẻ tích tụ hoặc lạm phát hóa đơn sinh hoạt đang gia tăng áp lực dòng tiền.
+*   **Chậm nhịp gia thế:** Việc để ngân sách tích sản ở mức thấp trì hoãn thời gian mở rộng lãi kép danh mục tài chính dài hạn của bạn.
+
+### 🛠️ KẾ HOẠCH HÀNH ĐỘNG TỐI ƯU
+1.  **Thắt chặt tức thời:** Cắt giảm giảm 10% chi phí ăn uống và giải trí không thiết yếu để tái đắp đệm tích lũy ngày.
+2.  **Kỷ luật vàng:** Chuyển dịch dòng vốn đầu tư theo nguyên lý "Pay yourself first" — tự động chuyển tiền ngay khi nhận thu nhập đầu kỳ.`;
+      } else if (savingsRate < 35) {
+        review = `### 📊 CHỈ SỐ SỨC KHỎE DÒNG TIỀN
+*   **Tỷ lệ Tiết kiệm thực tế (Savings Rate):** ${savingsRate.toFixed(1)}% - **ỔN ĐỊNH & LÀNH MẠNH** (Đạt vùng khuyến khuyến của chuyên gia).
+*   **Tỷ số Tích sản (Investment Rate):** ${((parsedInvested / (parsedIncome || 1)) * 100).toFixed(1)}% - Một thói quen giải ngân tuyệt vời giúp tối ưu hóa tổng dòng vốn nhàn rỗi.
+
+### 💡 INSIGHTS CHUYÊN SÂU & RÒ RỈ DÒNG TIỀN
+*   **Quản trị hiệu quả:** Lối sống tối giản tinh gọn đang hỗ trợ đắc lực giúp bạn duy trì một bộ khung ngân sách cực tốt trước áp lực vật giá vĩ mồm.
+*   **Giải ngân linh động:** Khoản tích lũy nhàn rỗi giải ngân vào rổ phân bổ tạo đệm phòng thủ chống mất giá cực kỳ tối ưu.
+
+### 🛠️ KẾ HOẠCH HÀNH ĐỘNG TỐI ƯU
+1.  **Nâng cấp chỉ số:** Tối ưu hóa thêm một chút bằng cách cắt bớt phí thuê bao không sử dụng để đẩy tích lũy lên mốc 30%.
+2.  **Bồi đắp năng lực ngoại:** Trích 5% lợi ích gia tăng để đầu tư tri thức, khóa học chứng chỉ thúc đẩy nấc thang thu nhập gốc tăng tốc.`;
       } else {
-        review = `* **Sức khỏe tài chính xuất sắc** (${savingsRate.toFixed(1)}% tỷ lệ tiết kiệm): Khả năng tiết kiệm tuyệt vời! Bạn đang đi trước tiến độ tự do tài chính dài hạn một cách ngoạn mục.\n* **Tích sản tối ưu**: Giải ngân hiệu quả giúp tận dụng lãi kép nhanh nhất. Tiếp tục giữ vững phong độ đỉnh cao này.\n* **Mẹo bổ trợ (Ngoại tuyến)**: Bạn có dư lượng thanh khoản dồi dào, hãy trích một góc nhỏ cho quỹ tự học hoặc thử nghiệm side hustle.`;
+        review = `### 📊 CHỈ SỐ SỨC KHỎE DÒNG TIỀN
+*   **Tỷ lệ Tiết kiệm thực tế (Savings Rate):** ${savingsRate.toFixed(1)}% - **XUẤT SẮC THƯỢNG HẠNG** (Vượt xa mặt bằng khuyến khích chuẩn 30%).
+*   **Tỷ số Tích sản (Investment Rate):** ${((parsedInvested / (parsedIncome || 1)) * 100).toFixed(1)}% - Hiệu suất phân bổ cực cao đưa bạn tiến rất nhanh tới điểm mốc tự do.
+
+### 💡 INSIGHTS CHUYÊN SÂU & RÒ RỈ DÒNG TIỀN
+*   **Bộ máy thặng dư mạnh mẽ:** Bạn đang thắt chặt kỷ cương chi tiêu đáng kinh ngạc, hoặc cơ cấu tạo thêm nguồn thu nhập phụ Side Hustle đang diễn tiến rất thuận lợi.
+*   **Gối đệm dồi dào:** Khả năng sẵn sàng của quỹ thanh khoản cao sẵn lùi bước trước bất cứ biến thể thị trường tiêu cực nào.
+
+### 🛠️ KẾ HOỆCH HÀNH ĐỘNG TỐI ƯU
+1.  **DCA đều đặn:** Cam kết tích sản dốc chỉ số VN30 đều tay hằng tuần để mua được điểm giá trung bình tối ưu (không cố dự đoán đỉnh/đáy thị trường).
+2.  **Khám phá mở rộng:** Tối ưu hóa nguồn tiền dôi dư qua các danh mục bán thời gian hoặc đầu tư vốn vào ý tưởng Side Hustle ứng dụng AI để tăng trưởng dốc thu nhập thụ động.`;
       }
 
       // Add actual check-in successfully offline
@@ -215,6 +287,37 @@ export function Dashboard({ profile, allocation, checkins, addCheckin, setActive
               {language === 'vi' ? 'Khai báo số thực chi tiêu tháng này giúp AI phản hồi, bám sát rò rỉ và đề xuất điều chỉnh cơ cấu phân bổ.' : 'Report actual cash factors so your AI Co-pilot can audit spending leaks and adjust allocation balances.'}
             </p>
 
+            {ledgerValuesForMonth.count > 0 && (
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3.5 space-y-2 text-xs">
+                <div className="flex items-center gap-1.5 font-bold text-emerald-400">
+                  <Zap className="w-3.5 h-3.5 animate-pulse" />
+                  <span>{language === 'vi' ? 'Giao dịch từ Sổ' : 'Sync from Ledger'}</span>
+                </div>
+                <p className="text-zinc-400 text-[10px] leading-normal font-medium">
+                  {language === 'vi'
+                    ? `Phát hiện ${ledgerValuesForMonth.count} giao dịch tháng này. Tổng tiền: Thu nhập ${(ledgerValuesForMonth.inc/1e6).toFixed(1)}M, Chi tiêu ${(ledgerValuesForMonth.exp/1e6).toFixed(1)}M, Đầu tư ${(ledgerValuesForMonth.inv/1e6).toFixed(1)}M.`
+                    : `Found ${ledgerValuesForMonth.count} txs of this month. Total: Income ${(ledgerValuesForMonth.inc/1e6).toFixed(1)}M, Expense ${(ledgerValuesForMonth.exp/1e6).toFixed(1)}M, Invest ${(ledgerValuesForMonth.inv/1e6).toFixed(1)}M.`
+                  }
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIncome(ledgerValuesForMonth.inc.toString());
+                    setExpenses(ledgerValuesForMonth.exp.toString());
+                    setInvested(ledgerValuesForMonth.inv.toString());
+                    setNotes(
+                      language === 'vi'
+                        ? `Trích xuất từ Sổ Giao Dịch tháng ${currentMonthStr} (${ledgerValuesForMonth.count} giao dịch).`
+                        : `Extracted from transaction ledger for ${currentMonthStr} (${ledgerValuesForMonth.count} txs).`
+                    );
+                  }}
+                  className="w-full py-1.5 px-2 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black text-[10px] rounded-lg cursor-pointer transition-colors focus:outline-none flex justify-center items-center gap-1 shadow-sm"
+                >
+                  <span>{language === 'vi' ? 'Lấy số liệu tự thặng dư' : 'Auto fill values'}</span>
+                </button>
+              </div>
+            )}
+
             <form onSubmit={handleAddCheckinSubmit} className="space-y-3 text-sm">
               <div className="grid grid-cols-2 gap-2">
                 <div>
@@ -223,13 +326,18 @@ export function Dashboard({ profile, allocation, checkins, addCheckin, setActive
                   </label>
                   <input
                     id="chk_inc"
-                    type="number"
+                    type="text"
                     value={income}
                     onChange={(e) => setIncome(e.target.value)}
-                    placeholder="35000000"
+                    placeholder="35m"
                     className="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 font-mono text-xs rounded p-2 focus:outline-none focus:border-emerald-500"
                     required
                   />
+                  {income && parseShorthandNumber(income) > 0 && (
+                    <span className="text-[10px] text-emerald-400 font-semibold block mt-0.5 font-mono">
+                      ➜ {parseShorthandNumber(income).toLocaleString('vi-VN')} ₫
+                    </span>
+                  )}
                 </div>
                 <div>
                   <label htmlFor="chk_exp" className="block text-[10px] text-zinc-400 uppercase tracking-widest font-semibold mb-1">
@@ -237,13 +345,18 @@ export function Dashboard({ profile, allocation, checkins, addCheckin, setActive
                   </label>
                   <input
                     id="chk_exp"
-                    type="number"
+                    type="text"
                     value={expenses}
                     onChange={(e) => setExpenses(e.target.value)}
-                    placeholder="14500000"
+                    placeholder="14.5m"
                     className="w-full bg-zinc-950 border border-zinc-805 text-zinc-100 font-mono text-xs rounded p-2 focus:outline-none focus:border-emerald-500"
                     required
                   />
+                  {expenses && parseShorthandNumber(expenses) > 0 && (
+                    <span className="text-[10px] text-red-400 font-semibold block mt-0.5 font-mono">
+                      ➜ {parseShorthandNumber(expenses).toLocaleString('vi-VN')} ₫
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -253,13 +366,24 @@ export function Dashboard({ profile, allocation, checkins, addCheckin, setActive
                 </label>
                 <input
                   id="chk_invest"
-                  type="number"
+                  type="text"
                   value={invested}
                   onChange={(e) => setInvested(e.target.value)}
-                  placeholder="12000000"
+                  placeholder="12m"
                   className="w-full bg-zinc-950 border border-zinc-805 text-zinc-100 font-mono text-xs rounded p-2 focus:outline-none focus:border-emerald-500"
                   required
                 />
+                {invested && parseShorthandNumber(invested) > 0 && (
+                  <span className="text-[10px] text-blue-400 font-semibold block mt-0.5 font-mono">
+                    ➜ {parseShorthandNumber(invested).toLocaleString('vi-VN')} ₫
+                  </span>
+                )}
+              </div>
+
+              <div className="p-1 px-2.5 rounded bg-zinc-950/50 border border-zinc-900 text-zinc-500 text-[10px] leading-relaxed">
+                {language === 'vi' 
+                  ? '💡 Hỗ trợ viết tắt: 30m = 30 triệu, 14.5m = 14,5 triệu, 500k = 500 nghìn...' 
+                  : '💡 Shorthands supported: e.g. 30m = 30M, 14.5m = 14.5M, 500k = 500K...'}
               </div>
 
               <div>
@@ -339,12 +463,25 @@ export function Dashboard({ profile, allocation, checkins, addCheckin, setActive
                       </p>
                     )}
 
-                    <div className="border-t border-zinc-900 pt-2.5 space-y-1.5">
-                      <span className="text-[9px] uppercase tracking-wider text-emerald-400 font-semibold font-mono block">
-                        {language === 'vi' ? 'Nhận xét Co-pilot:' : 'Co-pilot Evaluation feedback:'}
+                    <div className="border-t border-zinc-900/80 pt-3 space-y-1.5">
+                      <span className="text-[9px] uppercase tracking-widest text-emerald-400 font-bold font-mono block">
+                        {language === 'vi' ? '✦ Nhận xét chuyên sâu từ FinCopilot:' : '✦ Copilot In-depth Assessment:'}
                       </span>
-                      <div className="text-[11px] text-zinc-300 leading-relaxed space-y-1 pl-1 whitespace-pre-wrap">
-                        {item.ai_review}
+                      <div className="text-[11px] text-zinc-300 leading-relaxed pl-0.5 select-text">
+                        <div className="markdown-body">
+                          <Markdown
+                            components={{
+                              h3: ({ node, ...props }) => <h5 className="text-[10px] font-extrabold text-teal-400 mt-3.5 mb-1.5 uppercase font-mono tracking-wider" {...props} />,
+                              p: ({ node, ...props }) => <p className="text-zinc-300 text-[11px] leading-relaxed mb-2 font-sans" {...props} />,
+                              ul: ({ node, ...props }) => <ul className="list-disc pl-4 space-y-1 mb-2.5 text-zinc-300 font-sans" {...props} />,
+                              ol: ({ node, ...props }) => <ol className="list-decimal pl-4 space-y-1 mb-2.5 text-zinc-300 font-sans" {...props} />,
+                              li: ({ node, ...props }) => <li className="text-[11px] leading-relaxed text-zinc-350 font-sans mt-0.5" {...props} />,
+                              strong: ({ node, ...props }) => <strong className="font-extrabold text-emerald-400 font-sans" {...props} />,
+                            }}
+                          >
+                            {item.ai_review}
+                          </Markdown>
+                        </div>
                       </div>
                     </div>
                   </div>

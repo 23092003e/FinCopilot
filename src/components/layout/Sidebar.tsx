@@ -15,6 +15,7 @@ import {
   Flame,
   LogOut,
   Download,
+  Receipt,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
@@ -33,6 +34,7 @@ export function Sidebar({ activeTab, setActiveTab, onboardingCompleted = true }:
     { id: 'dashboard', langKey: 'nav.dashboard', icon: LayoutDashboard },
     { id: 'advisor', langKey: 'nav.advisor', icon: Compass },
     { id: 'onboarding', langKey: 'nav.onboarding', icon: UserCheck },
+    { id: 'ledger', langKey: 'nav.ledger', icon: Receipt },
     { id: 'simulator', langKey: 'nav.simulator', icon: TrendingUp },
     { id: 'scenarios', langKey: 'nav.scenarios', icon: LineChart },
     { id: 'side-hustle', langKey: 'nav.sidehustle', icon: Lightbulb },
@@ -40,7 +42,7 @@ export function Sidebar({ activeTab, setActiveTab, onboardingCompleted = true }:
   ];
 
   return (
-    <aside className="w-68 bg-zinc-950 border-r border-zinc-900 flex flex-col justify-between shrink-0 h-screen sticky top-0 hidden md:flex transition-colors duration-200">
+    <aside className="w-68 bg-zinc-950 border-r border-zinc-900 flex flex-col justify-between shrink-0 h-screen fixed top-0 left-0 z-20 hidden md:flex transition-colors duration-200">
       {/* Brand Label */}
       <div className="p-6 border-b border-zinc-900/60">
         <div className="flex items-center gap-2">

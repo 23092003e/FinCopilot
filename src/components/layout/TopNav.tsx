@@ -25,6 +25,7 @@ export function TopNav({ profile, activeTab, setActiveTab }: TopNavProps) {
     { id: 'dashboard', langKey: 'nav.dashboard' },
     { id: 'advisor', langKey: 'nav.advisor' },
     { id: 'onboarding', langKey: 'nav.onboarding' },
+    { id: 'ledger', langKey: 'nav.ledger' },
     { id: 'simulator', langKey: 'nav.simulator' },
     { id: 'scenarios', langKey: 'nav.scenarios' },
     { id: 'side-hustle', langKey: 'nav.sidehustle' },

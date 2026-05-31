@@ -1,134 +1,263 @@
-# 🌌 FinCopilot - AI Financial Co-pilot for Vietnamese Young Professionals
-> **Smart Wealth Allocation, Long-term DCA Tích sản, and Side Hustle Generator guided by Gemini AI.**
+# 🌌 FinCopilot — Full-Stack AI Financial Companion for Vietnamese Young Professionals
+
+<div align="center">
+
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=flat-flat&color=3b82f6)](https://opensource.org/licenses/Apache-2.0)
+[![Node Version](https://img.shields.io/badge/Node.js-%3E%3D_18.0.0-emerald?style=flat-flat&color=10b981)](https://nodejs.org/)
+[![Vite](https://img.shields.io/badge/Vite-6.0-purple?style=flat-flat&color=8b5cf6)](https://vite.dev/)
+[![React](https://img.shields.io/badge/React-19.0-sky?style=flat-flat&color=0ea5e9)](https://react.dev/)
+[![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4.0-teal?style=flat-flat&color=0d9488)](https://tailwindcss.com/)
+
+**The highly optimized wealth-allocation advisor, dynamic savings DCA simulator, and AI Side-Hustle planner customized for Vietnam's modern workforce.**
 
 ---
 
-*Scroll down or click here for the **[Vietnamese Version / Bản Tiếng Việt](#-fincopilot---trợ-lý-tài-chính-thông-minh-bằng-ai)**.*
+[🇺🇸 English Documentation](#-english-version) • [🇻🇳 Tài liệu Tiếng Việt](#-ban-tieng-viet)
+
+</div>
 
 ---
 
 ## 🇺🇸 English Version
 
 ### What is it?
-**FinCopilot** is a full-stack, personal wealth management application tailored for young professionals, developers, and creators in Vietnam. It guides users from core financial onboarding, emergency fund structuring, and long-term Dollar-Cost Averaging (DCA/Tích sản) simulation, to AI-driven wealth allocation advice and customized "Side Hustle" business ideas. 
+**FinCopilot** is a modular, high-performance personal finance platform built with TypeScript, React 19, and Express. It is specifically targeted at young professionals, developers, and gig-workers in Vietnam to help them bridge the gap between active earnings, emergency safety buffers, long-term wealth compounding (DCA), and secondary digital revenue streams.
 
-FinCopilot has a built-in transaction logging engine (Ledger) that accepts real-time automated webhook notifications (e.g., SMS alerts forwarded by Telegram Bot or n8n automated integration workflow) and supports intelligent periodic financial evaluations directly using Gemini-3.5-Flash.
+FinCopilot has a built-in transaction ledger connected via secure private token webhooks (leveraging Telegram logs, n8n automation, or curl) and features monthly AI finance check-ins. On top of that, it boasts an automated **Multi-Provider AI Engine** supporting Google Gemini, OpenAI, and Anthropic.
 
 ---
 
 ### Why should I use it?
-1. **Designed for Vietnam**: Handles Native Vietnamese currency (`₫` / `VND`) formatting, native bank rates, and typical asset classes (such as gold, high-yield bank deposits, VN30 index ETFs, and real estate).
-2. **Server-Side API security**: Keeps your Google Gemini API tokens completely hidden from the browser frontend using an Express proxy.
-3. **Automated Transactions (Zero Manual Hassle)**: Generate a unique webhook token to automatically pipe income or expenses into your ledger using n8n or generic messaging bots.
-4. **Heuristic Fallback System**: If you lack a Gemini API key or face server-side quota limits, a detailed local rule-set engine computes highly accurate allocations and recommendations tailored to your profile.
-5. **Cosmic Midnight Theme**: Beautiful responsive workspace featuring dynamic canvas stars and premium typography (Inter & JetBrains Mono), eliminating unnecessary UI clutter.
+*   **Hyper-Localized for Vietnam**: Out-of-the-box support for Vietnamese Dong (`₫` / `VND`) formatting, Vietnamese savings rates, tax bands, and native investment channels (VN30 ETFs, Gold, Deposits, and local tech freelancing).
+*   **Provider-Agnostic LLM Routing**: Bring your own keys. By detecting key prefixes dynamically, the system routes requests to **Google Gemini** (`gemini-3.5-flash`), **OpenAI** (`gpt-4o-mini`), or **Anthropic** (`claude-3-5-haiku`) on-the-fly.
+*   **Security-First Backend Architecture**: All third-party secrets and GenAI calls reside strictly behind a secure Express Proxy backend. No credentials are ever exposed to client web panels.
+*   **Zero-friction Remote Webhooks**: Bind your unique secret webhook token to capture automated SMS bank balance changes or automated spending notifications from Telegram bots.
+*   **Smart Internal Heuristics**: Facing network drops or rate limits? The local deterministic fallback rules-engine calculates robust capital allocations based on risk appetites without breaking a sweat.
+*   **Immersive Cyber-Midnight Theme**: Clean responsive layout decorated with micro-animations (`motion`) and interactive cosmic starry canvases, pairing clean Inter with monospace JetBrains Mono display typography.
+
+---
+
+### System Architecture Blueprint
+
+```text
+                                  ┌───────────────────────────┐
+                                  │   Third-Party Consumers   │
+                                  │  (Telegram Bot, n8n, etc) │
+                                  └─────────────┬─────────────┘
+                                                │ Secure HTTP POST
+                                                ▼ (with custom token)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          SERVER-SIDE BACKEND ROUTING                        │
+│                                                                             │
+│               ┌──────────────────────────────────────────────┐              │
+│               │             /api/webhook/transaction          │              │
+│               └──────────────────────┬───────────────────────┘              │
+│                                      │ Accepts Ledger Transactions          │
+│                                      ▼                                      │
+│               ┌──────────────────────────────────────────────┐              │
+│               │          Multi-Provider LLM Gateway          │              │
+│               │            /api/ai/allocate-assets           │              │
+│               │            /api/ai/side-hustles              │              │
+│               │            /api/ai/generate-review           │              │
+│               └──────────────────────┬───────────────────────┘              │
+│                                      │                                      │
+│               ▼                      ▼                      ▼               │
+│   ┌─────────────────────┐   ┌─────────────────┐   ┌─────────────────────┐   │
+│   │  Google GenAI SDK  │   │  OpenAI API Client│  │ Anthropic API Client│   │
+│   │  (gemini-3.5-flash) │   │  (gpt-4o-mini)  │   │ (claude-3-5-haiku)  │   │
+│   └─────────────────────┘   └─────────────────┘   └─────────────────────┘   │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │ Compiles Structured Data
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                             REACT CLIENT APP (SPA)                          │
+│                                                                             │
+│   ┌────────────────────┐     ┌────────────────────┐     ┌────────────────┐  │
+│   │  DASHBOARD METRICS │     │  LEDGER WORKSPACE  │     │ DCA SIMULATOR  │  │
+│   └────────────────────┘     └────────────────────┘     └────────────────┘  │
+│                                      │                                      │
+│                                      ▼                                      │
+│                       ┌──────────────────────────────┐                      │
+│                       │    Integrated Data Coherence │                      │
+│                       │ (Firestore / Local Fallback) │                      │
+│                       └──────────────────────────────┘                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Folder Blueprint
+
+The following tree outlines the clean modularity of the codebase, ensuring minimal file sizes to optimize maintenance:
+
+```text
+├── .env.example                  # Environment configuration blueprint
+├── firebase-applet-config.json   # Generated Firebase credentials
+├── firebase-blueprint.json       # Document schemas for Firestore
+├── firestore.rules               # Strict document-level security rules
+├── index.html                    # SPA portal entry point
+├── metadata.json                 # Core system applet declarations
+├── package.json                  # Workspace dependencies & execution scripts
+├── server.ts                     # Full-stack API Gateway Router & Dev server middleware
+├── tsconfig.json                 # TypeScript strict compiler parameters
+├── vite.config.ts                # Vite modules and Tailwind compilation parameters
+├── public/                       # Statics, brand logos, fallback assets
+└── src/                          # System Client App Space
+    ├── main.tsx                  # React entry point
+    ├── App.tsx                   # Master router & User Auth State coordinator
+    ├── index.css                 # Main CSS injection featuring Tailwind @theme imports
+    ├── types.ts                  # Shared typings and strictly typed interfaces
+    ├── components/               # High-fidelity reusable modules
+    │   ├── auth/                 # User authentication layout forms (LoginScreen)
+    │   ├── charts/               # Wrapped charts protecting canvas resize lifecycle
+    │   │   ├── AllocationPieChart.tsx   # Asset structure target split representation
+    │   │   ├── DCAGrowthChart.tsx       # Compound compounding visualizer curves
+    │   │   ├── NetWorthChart.tsx        # Compound asset stack bars
+    │   │   └── ScenarioCompareChart.tsx # Core macro scenarios delta lines
+    │   ├── forms/                # Multi-stage Onboarding questions
+    │   │   ├── OnboardingStep1.tsx      # Base finances, reserves & incomes
+    │   │   ├── OnboardingStep2.tsx      # Risk matrices & timelines
+    │   │   └── OnboardingStep3.tsx      # Skills catalogs & profiles
+    │   ├── layout/               # Structure shells
+    │   │   ├── Sidebar.tsx              # Elegantly responsive control rail
+    │   │   └── TopNav.tsx               # Header reflecting Webhook parameters & Auth metrics
+    │   └── shared/               # Interactive UI visuals
+    │       └── BackgroundUniverse.tsx   # Canvas cosmic interactive particle starfield
+    ├── contexts/                 # Global state pools
+    │   ├── AuthContext.tsx       # Manages user accounts and Firebase identities
+    │   └── UIContext.tsx         # Coordinates tab states & cross-module locales (EN/VI)
+    ├── hooks/                    # Reusable logic integrations
+    │   └── useProfile.ts         # Coordinates local state seamlessly with Firestore sync
+    └── pages/                    # Main tab pages in the workspace
+        ├── Dashboard.tsx         # Health assessment reports & periodic AI evaluations
+        ├── Onboarding.tsx        # Guided user financial mapping configuration
+        ├── Advisor.tsx           # Generative portfolio structures with Target vs. Actuals
+        ├── Ledger.tsx            # Transaction registry with webhook ingestion reviews
+        ├── Simulator.tsx         # Interactive compound investment simulator
+        ├── Scenarios.tsx         # Macro-economic scenario stress tests
+        ├── SideHustle.tsx        # Skills-to-income generative advisor
+        └── Settings.tsx          # Key settings, token parameters & database administration
+```
 
 ---
 
 ### Installation
 
-Ensure you have [Node.js (v18+)](https://nodejs.org/) installed before proceeding.
+Make sure your server environment possesses [Node.js (v18+)](https://nodejs.org/).
 
 ```bash
-# 1. Clone or visit your repository folder
+# 1. Access the workspace directory
 cd fincopilot
 
-# 2. Install all dependencies for both Express and React
+# 2. Deploy required third-party frameworks
 npm install
 ```
 
 ---
 
-### Quick Start (copy-paste and run instantly)
+### Quick Start
 
-Copy and execute these commands in your console to run the application immediately:
+Get your local environment working in under 30 seconds using these quick terminal instructions:
 
 ```bash
-# 1. Declare your mock/local environment config
+# 1. Duplicate standard parameters
 cp .env.example .env
 
-# 2. Boot the full-stack development environment instantly!
+# 2. Boot the integrated development compiler instantly!
 npm run dev
 ```
 
-Open your browser at [http://localhost:3000](http://localhost:3000). The server runs the Express REST API and proxies assets through Vite automatically!
+Visit [http://localhost:3000](http://localhost:3000) on your local machine.
 
 ---
 
-### API Usage
+### Multi-Provider AI Routing
 
-FinCopilot exposes backend endpoints on port `3000` to support remote webhook logging.
+FinCopilot automatically inspects the API key structure passed either from settings or `.env` and intelligently pipes requests down the correct AI client pathways:
 
-#### 1. POST `/api/webhook/transaction`
-Send automatic bank balance alterations or custom transaction entries from remote agents (Telegam bots, n8n).
+| Provided Key Format | Detected Engine | Targeted Model | Mode |
+|:---|:---|:---|:---|
+| Starts with `sk-ant-` | **Anthropic Claude** | `claude-3-5-haiku-20241022` | Server-Side API |
+| Starts with `sk-` (and not ant) | **OpenAI GP** | `gpt-4o-mini` | Server-Side API |
+| Otherwise / Unprefixed | **Google Gemini** | `gemini-3.5-flash` | Server-Side SDK |
 
-* **Headers**:
-  * `Content-Type: application/json`
-  * `X-Webhook-Token: <your_private_token>` (or pass via `?token=<your_private_token>` query param)
+---
 
-* **Request Body Payload**:
+### API Usage Specifications
+
+The backend Express infrastructure listens for remote integrations to automate financial logging.
+
+#### 🕹️ Queue Ingestion Transaction
+*   **HTTP Endpoint**: `POST /api/webhook/transaction`
+*   **Auth Parameters**: Supply `token` in URL search params (e.g. `?token=YOUR_UNIQ_TOKEN`) or via `X-Webhook-Token` header.
+*   **Request Format** (`application/json`):
 ```json
 {
   "type": "expense",
-  "amount_vnd": 50000,
+  "amount_vnd": 65000,
   "category": "Ăn uống",
-  "description": "Bánh mì ăn sáng nhận từ Telegram"
+  "description": "Cà phê buổi sáng ghi qua Telegram"
 }
 ```
-* **Supported Categories & Types**:
-  * `type`: `'income'` | `'expense'` | `'investment'`
-  * `amount_vnd`: Positive integer
-  * `category`: (Optional) Custom string
+*   **Field Requirements**:
+    *   `type`: Strictly must equal `'income'` | `'expense'` | `'investment'`.
+    *   `amount_vnd`: Non-negative positive integer.
+    *   `category`: Optional category string.
+    *   `description`: Descriptive text helpful for historical classification.
 
 ---
 
 ### Configuration
 
-Declare your configurations in the `.env` file inside your workspace root:
+Customize the `.env` parameters inside your backend server's core tree:
 
 ```env
-# Gemini API Key (Required for AI generation, kept server-side only)
-GEMINI_API_KEY=your_google_gemini_api_key
+# Google Gemini API credentials (Default / Heuristics)
+GEMINI_API_KEY=AIzaSy...
 
-# Database Connectivity (Optional)
-# FinCopilot operates a local fallback engine seamlessly storing profiles
-# in LocalStorage if Firebase credentials aren't deployed.
+# OpenAI API credentials (Triggers automations when API keys fit 'sk-')
+OPENAI_API_KEY=sk-proj-...
+
+# Anthropic API credentials (Triggers automations when API keys fit 'sk-ant-')
+ANTHROPIC_API_KEY=sk-ant-pix...
 ```
 
 ---
 
-### Development
+### Development Commands
 
-* **Dev Commands**: Runs `server.ts` directly on TypeScript execute environment (`tsx`) alongside local Vite middleware:
-  ```bash
-  npm run dev
-  ```
-* **Production Build**: Compiles web bundle and bundles the TypeScript backend server into a single CJS binary (`dist/server.cjs`) to escape pathing errors:
-  ```bash
-  npm run build
-  ```
-* **Production Run**:
-  ```bash
-  npm run start
-  ```
-* **Coding Standards**: Pre-configured with Tailwind v4 `@theme` settings. Avoid using raw inline styles or extra CSS modules. Run linter before committing:
-  ```bash
-  npm run lint
-  ```
+Run these scripts from your package catalog:
+
+```bash
+# Spark active development (Vite Middleware proxy alongside Express backend listener on port 3000)
+npm run dev
+
+# Compile React and generate bundled server file inside '/dist/server.cjs' using esbuild
+npm run build
+
+# Stand up ready product code on standalone production engines
+npm run start
+
+# Audit strict code validations and type safety benchmarks
+npm run lint
+```
 
 ---
 
 ### Contributing
-We welcome developer feedback and structural improvements!
-1. Fork the codebase on your favorite Git provider.
-2. Build modular sub-components in `/src/components/` and keep `/src/App.tsx` slim.
-3. Test compatibility using `npm run lint` and `npm run build`.
-4. Open a clear Pull Request.
+
+We highly value neat, unified contributions!
+1. Fork the GitHub catalog.
+2. Maintain strict separation of concerns — write modular subcomponents inside `/src/components/`, shielding `App.tsx` from bloating.
+3. Keep styles inside Tailwind v4 declarations instead of cluttering styles with inline definitions.
+4. Ensure `npm run lint` and `npm run build` finish successfully.
+5. Create a clean Pull Request.
 
 ---
 
 ### License
-This project is licensed under the Apache-2.0 License. See the header declarations inside `/server.ts` or individual pages for full notice.
+
+Licensed under the [Apache-2.0 open-source certificate](LICENSE). All licensing details are mentioned inside page codebases or `server.ts`.
 
 ---
 ---
@@ -136,122 +265,239 @@ This project is licensed under the Apache-2.0 License. See the header declaratio
 ## 🇻🇳 Bản Tiếng Việt
 
 ## Nó là gì?
-**FinCopilot** là một nền tảng quản lý tài chính cá nhân toàn diện (Full-Stack) được thiết kế đặc thù cho giới trẻ công nghệ, lập trình viên và những nhà sáng tạo nội dung số tại Việt Nam.
+**FinCopilot** là một nền tảng quản lý tài chính cá nhân full-stack kết hợp API đa trung tâm được thiết kế đặc biệt dành riêng cho thế hệ chuyên gia trẻ, lập trình viên và người tự kinh doanh tự do (Gig-Workers) tại Việt Nam. 
 
-Hệ thống đưa bạn đi qua quy trình Onboarding xác mục tiêu tích lũy, tối ưu hóa quỹ an toàn tài chính cá nhân, mô phỏng sinh lời lãi kép qua DCA (Tích sản định kỳ), đồng thời đề xuất cơ cấu phân bổ dòng tiền và các đề án nghề tay trái (Side Hustle) bằng Trí tuệ Nhân tạo Gemini thông minh.
+Hệ thống điều hướng người dùng định hình mục tiêu thặng dư, cơ cấu quỹ khẩn cấp tối ưu, mô phỏng sinh lời dài hạn (hành trình Tích sản DCA / Lãi kép), lập kịch bản kinh tế vĩ mô, tự động đề xuất phân bổ dòng tiền và phác thảo 5 mô hình kinh doanh nhỏ (Side Hustle) đột phá dựa trên năng lực sẵn có thông qua Generative AI.
+
+FinCopilot tích hợp **Sổ Cái Ledger** thông minh hỗ trợ đồng bộ dữ liệu thu chi tự động theo thời gian thực từ Telegram Bot hoặc luồng tự động hóa n8n bằng cổng API nhận diện bảo mật độc bản.
 
 ---
 
 ## Tại sao tôi nên sử dụng nó?
-1. **Thiết kế Định vị Việt Nam**: Hỗ trợ bản địa hóa tiếng Việt - Anh trực quan, xử lý mệnh giá Đồng tiền (`₫` / `VND`), ước tính các kênh đầu tư quen thuộc như Tiết kiệm kì hạn, Chứng chỉ quỹ ETF VN30, Vàng và Bất động sản.
-2. **Bảo mật Khoá API Tuyệt đối**: Khởi tạo lười (lazy-load) và thực thi cuộc gọi API Gemini-3.5-Flash tại Server-Side (Express backend), rũ bỏ rủi ro lộ khóa cá nhân trên trình duyệt client.
-3. **Sổ cái Ledger webhook siêu cấp**: Đồng bộ luồng giao dịch nhàn nhã thông qua Cổng Webhook riêng tư. Dễ dàng chuyển dịch tin nhắn biến động số dư SMS từ Telegram Bot hoặc n8n thẳng tới sổ chờ duyệt.
-4. **Mạng lưới cứu hộ Heuristic**: Nếu hệ thống chưa bật API Key hoặc gặp sự cố nghẽn mạng, thuật toán tài chính cục bộ Heuristic ưu việt sẽ tự động thế chỗ để đề xuất tỉ lệ vàng phân bổ tài sản chuẩn xác.
-5. **Giao diện Không Gian Huyền Bí (Cosmic Theme)**: Không gian làm việc tối thư thái kết hợp hiệu ứng bụi ngân hà tương tác sinh động bằng Canvas, dùng font chữ chữ chuyên dụng Inter và JetBrains Mono trang nhã cho số liệu.
+*   **Bản địa hóa sâu tại Việt Nam**: Hỗ trợ đầy đủ tiếng Việt, xử lý định dạng tiền tệ Việt Nam Đồng (`₫` / `VND`), đề xuất lãi suất nội địa và phân tách các kênh đầu tư truyền thống (Chứng chỉ quỹ ETF VN30, Vàng tiết kiệm, Tiết kiệm ngân hàng, Dự trữ linh hoạt).
+*   **Trí tuệ nhân tạo đa lõi (Multi-LLM)**: Cho phép nạp linh hoạt và tự động phân luồng cuộc gọi API tới **Google Gemini** (`gemini-3.5-flash`), **OpenAI** (`gpt-4o-mini`), hoặc **Anthropic** (`claude-3-5-haiku`) tức thì tùy thuộc vào định dạng Key của bạn.
+*   **Bảo vệ Key an toàn tuyệt đối**: Mọi hành trình liên kết và gọi dữ liệu của API đều diễn ra bí mật đằng sau proxy máy chủ Express. Tuyệt đối không để rò rỉ mã khóa ra tệp mã tĩnh chạy ở client.
+*   **Liên thông Webhook nhàn nhã**: Lấy nhanh mã Token Webhook bảo mật tại tab Settings và thiết lập đồng bộ tin nhắn biến động số dư hoặc ghi chép nhanh từ Telegram đẩy thẳng về hệ thống Ledger.
+*   **Hạ tầng cứu hộ Heuristic**: Dù hệ thống không có khóa API hay mất mạng, thuật toán tài chính cục bộ Heuristic tích hợp sẵn vẫn khởi động trơn tru, giúp xuất bản biểu đồ đề thiết lập tỉ lệ tài sản tối ưu.
+*   **Hơi thở Không Gian Huyền Bí (Cosmic Theme)**: Không gian làm việc tối hiện đại với hiệu ứng bụi sao ngân hà lấp lánh sinh động, phối hợp kiểu chữ display **Inter** và số liệu tính toán **JetBrains Mono** sắc nét.
+
+---
+
+## Kiến Trúc Luồng Hoạt Động
+
+```text
+                                  ┌───────────────────────────┐
+                                  │   Dịch vụ đẩy ngoài       │
+                                  │  (Telegram Bot, n8n, etc) │
+                                  └─────────────┬─────────────┘
+                                                │ Gửi dữ liệu an toàn
+                                                ▼ (Kèm Token Webhook riêng)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       TRAO ĐỔI VÀ ĐIỀU PHỐI TỪ SERVER-SIDE                  │
+│                                                                             │
+│               ┌──────────────────────────────────────────────┐              │
+│               │             /api/webhook/transaction          │              │
+│               └──────────────────────┬───────────────────────┘              │
+│                                      │ Chuyển giao dịch vào danh sách chờ   │
+│                                      ▼                                      │
+│               ┌──────────────────────────────────────────────┐              │
+│               │         Hạ tầng nhận dạng AI đa lõi          │              │
+│               │            /api/ai/allocate-assets           │              │
+│               │            /api/ai/side-hustles              │              │
+│               │            /api/ai/generate-review           │              │
+│               └──────────────────────┬───────────────────────┘              │
+│                                      │                                      │
+│               ▼                      ▼                      ▼               │
+│   ┌─────────────────────┐   ┌─────────────────┐   ┌─────────────────────┐   │
+│   │  Google GenAI SDK  │   │  OpenAI API Client│  │ Anthropic API Client│   │
+│   │  (gemini-3.5-flash) │   │  (gpt-4o-mini)  │   │ (claude-3-5-haiku)  │   │
+│   └─────────────────────┘   └─────────────────┘   └─────────────────────┘   │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       │ Xuất bản cấu trúc JSON
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            REACT CLIENT APP (SPA)                           │
+│                                                                             │
+│   ┌────────────────────┐     ┌────────────────────┐     ┌────────────────┐  │
+│   │   BẢNG ĐIỀU KHIỂN  │     │ SỔ LEDGER TỰ ĐỘNG  │     │ BIỂU ĐỒ DCA    │  │
+│   └────────────────────┘     └────────────────────┘     └────────────────┘  │
+│                                      │                                      │
+│                                      ▼                                      │
+│                       ┌──────────────────────────────┐                      │
+│                       │   Cơ sở dữ liệu thống nhất   │                      │
+│                       │ (Firestore / Local Fallback) │                      │
+│                       └──────────────────────────────┘                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Sơ Đồ Chi Tiết Thư Mục Dự Án
+
+Cơ cấu thư mục được tổ chức tách biệt rõ ràng để tránh xung đột dung lượng tệp tin và nạp biên dịch nhanh chóng hơn:
+
+```text
+├── .env.example                  # File cấu hình môi trường mẫu mẫu
+├── firebase-applet-config.json   # Thông tin cấu hình ứng dụng Firebase
+├── firebase-blueprint.json       # Định dạng cơ sở tài liệu Firestore Blueprint
+├── firestore.rules               # Quy luật phân quyền bảo vệ văn bản Firestore
+├── index.html                    # Cửa ngõ tệp tĩnh SPA chính
+├── metadata.json                 # Khai báo chức năng hệ thống với trình dựng AI Studio
+├── package.json                  # Quản lý mã lệnh và các gói thư viện cài đặt
+├── server.ts                     # Điểm neo máy chủ điều phối API và nạp cổng phát triển Vite
+├── tsconfig.json                 # Cấu hình kiểm duyệt mã nghiêm ngặt của TypeScript
+├── vite.config.ts                # Định hướng luồng dịch Vite & Tailwind Compiler
+├── public/                       # Phân vùng hình ảnh, tài nguyên tĩnh của hệ thống
+└── src/                          # Không gian lập trình lõi Frontend
+    ├── main.tsx                  # Điểm khởi nạp React Client chính
+    ├── App.tsx                   # Điều hướng tổng và quản lý điều khiển đăng nhập
+    ├── index.css                 # File kiểu dáng nền chứa định dạng Tailwind CSS v4.0 `@theme`
+    ├── types.ts                  # Nơi tập trung toàn bộ interface kiểu dữ liệu dùng chung
+    ├── components/               # Bộ sưu tập các linh kiện nhỏ (Modular)
+    │   ├── auth/                 # Form và thiết kế màn hình kiểm soát đăng nhập (LoginScreen)
+    │   ├── charts/               # Tập hợp các loại biểu đồ đã xử lý vòng đời responsive an toàn
+    │   │   ├── AllocationPieChart.tsx   # Cơ cấu phân chia tài sản khuyên dùng
+    │   │   ├── DCAGrowthChart.tsx       # Đường biểu diễn tích sản lãi kép
+    │   │   ├── NetWorthChart.tsx        # Cột bộc lộ các phân mục thặng dư hiện có
+    │   │   └── ScenarioCompareChart.tsx # So chiếu các kịch bản đầu tư vĩ mô khác nhau
+    │   ├── forms/                # Khung khảo sát nhập môn Onboarding 3 lớp
+    │   │   ├── OnboardingStep1.tsx      # Bước 1: Tài sản hiện trạng & Thặng dư
+    │   │   ├── OnboardingStep2.tsx      # Bước 2: Chỉ số rủi ro & Mục tiêu tự do
+    │   │   └── OnboardingStep3.tsx      # Bước 3: Độc bản kỹ năng nghề nghiệp chuyên môn
+    │   ├── layout/               # Thiết kế kết cấu giao diện ngoài
+    │   │   ├── Sidebar.tsx              # Thanh tay vịn chuyển tab mượt mà bên trái
+    │   │   └── TopNav.tsx               # Thanh đầu trang điều khiển Token và trạng thái Auth
+    │   └── shared/               # Thành phần trang trí cao cấp
+    │       └── BackgroundUniverse.tsx   # Nền hạt vũ trụ tĩnh tương tác Canvas sống động
+    ├── contexts/                 # Vùng lưu trữ trạng thái chia sẻ liên thông
+    │   ├── AuthContext.tsx       # Quản trị thông tin xác thực và trạng thái Firebase Auth
+    │   └── UIContext.tsx         # Theo dõi biến số Ngôn ngữ (VI/EN) và chuyển tab hiển thị
+    ├── hooks/                    # Trích xuất xử lý logic nghiệp vụ
+    │   └── useProfile.ts         # Đồng bộ dữ liệu cấu hình thông minh giữa Local và Firestore
+    └── pages/                    # Các trang Tab nghiệp vụ chủ đạo
+        ├── Dashboard.tsx         # Kiểm tra sức khỏe ví tiền & Gửi nhận xét AI hàng tháng
+        ├── Onboarding.tsx        # Thiết kế khảo sát nạp số liệu tài chính cơ sở ban đầu
+        ├── Advisor.tsx           # Trực quan biểu đồ danh mục đề xuất thực tế vs mục tiêu kì vọng
+        ├── Ledger.tsx            # Nhật ký thu chi đa loại hình và cổng duyệt Webhook
+        ├── Simulator.tsx         # Máy tính dồn tiền DCA lãi kép tuyến tính
+        ├── Scenarios.tsx         # Chạy biến số suy thoái / hưng thịnh thị trường kinh tế
+        ├── SideHustle.tsx        # Tư vấn phân rã các lộ trình làm nghề rảnh tay tăng thu nhập
+        └── Settings.tsx          # Tùy chọn thiết bị cấu hình, cổng API Keys và dọn dẹp cơ sở dữ liệu
+```
 
 ---
 
 ## Cài đặt
 
-Yêu cầu máy tính cài đặt sẵn [Node.js (v18 trở lên)](https://nodejs.org/).
+Hãy đảm bảo thiết bị máy chủ hoặc máy phát triển đã nạp [Node.js (Bản 18 trở lên)](https://nodejs.org/).
 
 ```bash
-# 1. Truy cập thư mục chứa mã nguồn dự án
+# 1. Truy cập vào thư mục mã nguồn FinCopilot
 cd fincopilot
 
-# 2. Cài đặt các thư viện phụ thuộc liên quan
+# 2. Cài đặt toàn bộ bộ thư viện phụ thuộc của hệ thống
 npm install
 ```
 
 ---
 
-## Quick Start (Copy-paste chạy được ngay)
+## Khởi động nhanh (Copy-paste chạy được ngay)
 
-Chạy các lệnh bên dưới để khởi động nhanh ứng dụng:
+Để đưa sản phẩm hoạt động mượt mà đầy đủ mọi tiến trình trong chưa đầy 30 giây:
 
 ```bash
-# 1. Tạo tệp cấu hình môi trường từ bản tham chiếu cấu trúc
+# 1. Sao chép và tạo lập tệp cấu hình tham số môi trường
 cp .env.example .env
 
-# 2. Khởi chạy dự án tích hợp ngay lập tức!
+# 2. Khởi chạy dự án tích hợp ngay tức thì!
 npm run dev
 ```
 
-Tiếp theo, truy cập cổng trình duyệt nội bộ tại [http://localhost:3000](http://localhost:3000).
+Mở trình duyệt tại liên kết: [http://localhost:3000](http://localhost:3000) để trải nghiệm.
 
 ---
 
-## Cách thức sử dụng API
+## Cơ Chế Nhận Diện AI Tự Động
 
-Hệ thống sử dụng cổng backend REST API lắng nghe các thông tin từ cổng ngoài đổ về.
+FinCopilot tự phân rã cấu trúc tệp API keys được dán vào biểu mẫu Cài đặt hoặc khai báo trong `.env` để định hướng tiến trình nạp mô hình:
 
-#### 1. Đăng ký giao dịch mới: POST `/api/webhook/transaction`
-Truyền tín hiệu giao dịch thu chi phát sinh trực tiếp từ Telegram Bot hoặc luồng tự động n8n.
+| Định dạng API Key | Nhận diện Engine | Mô hình mục tiêu | Cơ chế kết nối |
+|:---|:---|:---|:---|
+| Bắt đầu bằng `sk-ant-` | **Anthropic Claude** | `claude-3-5-haiku-20241022` | Server-Side Express API |
+| Bắt đầu bằng `sk-` | **OpenAI GPT** | `gpt-4o-mini` | Server-Side Express API |
+| Định dạng khác / Mặc định | **Google Gemini** | `gemini-3.5-flash` | Official Google GenAI SDK |
 
-* **Headers**:
-  * `Content-Type: application/json`
-  * `X-Webhook-Token: <mã_token_cá_nhân_tại_settings>` (hoặc cung cấp dưới dạng tham số truy vấn `?token=<mã_token>`)
+---
 
-* **Nội dung yêu cầu (Body JSON)**:
+## Hướng Dẫn Sử Dụng REST API Webhook
+
+Máy chủ Express liên tục lắng nghe biến động giao dịch từ các bot/script ở bên ngoài.
+
+#### 🕹️ Đẩy giao dịch về hàng đợi Sổ Ledger
+*   **Địa chỉ cổng**: `POST /api/webhook/transaction`
+*   **Bảo mật truy cập**: Truyền param `token` trên URL (Ví dụ: `?token=XYZ`) hoặc đính kèm Header `X-Webhook-Token: <Token_Settings>`.
+*   **Định dạng yêu cầu** (`application/json`):
 ```json
 {
   "type": "expense",
-  "amount_vnd": 50000,
+  "amount_vnd": 65000,
   "category": "Ăn uống",
-  "description": "Bánh mì ăn sáng chuyển từ Telegram"
+  "description": "Cà phê buổi sáng ghi nhận từ Telegram Bot"
 }
 ```
-* **Tham số hợp lệ**:
-  * `type`: `'income'` (Thu nhập) | `'expense'` (Chi tiêu) | `'investment'` (Tích sản/Đầu tư)
-  * `amount_vnd`: Số nguyên lớn hơn 0
-  * `category`: Nhãn phân loại loại hình chi tiêu (Không bắt buộc)
+*   **Quy ước các trường**:
+    *   `type`: Bắt buộc phải là `'income'` (Thu nhập) | `'expense'` (Chi tiêu) | `'investment'` (Đầu tư tích sản).
+    *   `amount_vnd`: Số nguyên dương dạng số lượng (lớn hơn 0).
+    *   `category`: Tên nhãn phân nhóm giao dịch (Không bắt buộc).
+    *   `description`: Mô tả chi tiết phục vụ cho tiến trình AI đánh giá tháng sau.
 
 ---
 
-## Cấu hình
+## Cấu hình Biến Môi trường `.env`
 
-Thiết lập các biến môi trường trực tiếp trong tệp tin `.env` ở gốc thư mục dự án:
+Đóng góp và khai báo các khóa bí mật của bạn tại tệp tin `.env` ở thư mục gốc:
 
 ```env
-# Mã khóa trí tuệ nhân tạo (Bắt buộc để chạy các tính năng AI của Gemini)
-GEMINI_API_KEY=mã_api_key_gemini_của_bạn
+# Cấu hình AI mẫu chuẩn Google Gemini (Mặc định)
+GEMINI_API_KEY=AIzaSy...
 
-# Các cấu hình kết nối Firebase (Không bắt buộc)
-# Hệ thống hỗ trợ lưu trữ cục bộ Local-First thông minh và tự động đồng bộ 
-# sang đám mây Firestore khi bạn cập nhật tệp tin khởi tạo.
+# Cấu hình OpenAI (Tự khởi động nếu key bộc lộ dạng 'sk-')
+OPENAI_API_KEY=sk-proj-...
+
+# Cấu hình Anthropic Claude (Tự khởi động nếu key bộc lộ dạng 'sk-ant-')
+ANTHROPIC_API_KEY=sk-ant-pix...
 ```
 
 ---
 
-## Phát triển
+## Các Lệnh Thao Tác Khi Phát Triển
 
-* **Môi trường Dev**: Khởi động song hành Express Server và Vite Assets Proxy:
-  ```bash
-  npm run dev
-  ```
-* **Đóng gói phân phối (Build)**: Tế hợp toàn bộ mã đầu ra React kết hợp `esbuild` bọc máy chủ thành dạng đơn nhân `/dist/server.cjs` bảo đảm tốc độ khởi hành tối ưu:
-  ```bash
-  npm run build
-  ```
-* **Chạy Production**:
-  ```bash
-  npm run start
-  ```
-* **Tiêu chuẩn lập trình**: Mã nguồn sử dụng Tailwind CSS v4.0. Tránh sinh thêm tệp tin `.css` con ngoài luồng hoặc can thiệp bừa bãi vào hệ thống styles mặc định. Hãy tiến hành quét linter trước khi commit:
-  ```bash
-  npm run lint
-  ```
+```bash
+# Khởi động không gian Dev (Tích hợp song hành Express Server và Vite Assets Proxy trên cổng 3000)
+npm run dev
+
+# Đóng gói và biên dịch trọn vẹn dự án dưới tệp đơn nhất /dist/server.cjs bằng esbuild
+npm run build
+
+# Khởi chạy bản đóng gói chính thức trên môi trường Production
+npm run start
+
+# Kiểm soát rà soát lỗi cú pháp nghiêm ngặt toàn bộ tệp tin
+npm run lint
+```
 
 ---
 
-## Đóng góp
-Chúng tôi hoan nghênh mọi đóng góp của cộng đồng lập trình viên tài chính!
-1. Tạo một nhánh rẽ (Fork) từ nhánh chính của kho lưu trữ.
-2. Đóng góp tách biệt thông qua các files độc lập bên trong `/src/components/`, tránh dồn nén toàn bộ logic vào `App.tsx`.
-3. Chạy kiểm tra kỹ thuật bằng: `npm run lint` và `npm run build` trước khi đề đạt tích hợp.
-4. Gửi một yêu cầu Pull Request rõ ràng mô tả các đóng góp cải tiến của bạn.
+## Đóng góp đóng góp
+Chúng tôi hoan nghênh những ý tưởng đóng góp nâng cấp cốt lõi từ cộng đồng:
+1. Tạo một nhánh rẽ (Fork) từ kho lưu trữ.
+2. Thiết kế linh kiện tập trung tại thư mục `/src/components/`, tuyệt đối không viết bừa bãi làm phình tệp `App.tsx`.
+3. Kiềm chế sử dụng styles dạng inline, ưu ái sử dụng các quy chuẩn lớp tiện ích Tailwind CSS v4.0.
+4. Chạy kiểm tra kỹ thuật đạt mức độ biên dịch an toàn tuyệt đối qua `npm run lint` & `npm run build`.
+5. Tạo pull request mô tả rõ rệt các cải tiến công nghệ hữu hiệu.
 
 ---
 
 ## Bản quyền
-Dự án được phân phối chính thức theo giấy phép mã nguồn mở Apache-2.0. Xem chi tiết thông số bảo hộ bản quyền khai báo ở đầu trang mã nguồn và tập tin `/server.ts`.
+
+Sản phẩm được phân phối chính thức theo Giấy phép [Apache-2.0 open-source license](LICENSE). Toàn bộ khai báo bản quyền được ghi nhận trang nghiêm ở đầu các tệp tin nghiệp vụ lõi và tệp máy chủ `/server.ts`.

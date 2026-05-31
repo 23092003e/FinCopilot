@@ -7,7 +7,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
-import { getGeminiClient } from './src/lib/openai/client';
+import { getGeminiClient, callMultiProviderAI } from './src/lib/openai/client';
 import {
   ALLOCATION_SYSTEM_PROMPT,
   SIDE_HUSTLE_SYSTEM_PROMPT,
@@ -103,22 +103,17 @@ async function startServer() {
     const customApiKey = req.headers['x-gemini-api-key'] as string | undefined;
 
     try {
-      const ai = getGeminiClient(customApiKey);
       const prompt = `Hãy phân bổ danh mục tài sản dựa trên hồ sơ sau:
 ${JSON.stringify(profile, null, 2)}
 Lưu ý quy đổi số tiền và phần trăm một cách chính xác theo tổng số tiền tiết kiệm hiện tại là ${profile.total_savings_vnd} VND.`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
-        contents: prompt,
-        config: {
-          systemInstruction: ALLOCATION_SYSTEM_PROMPT,
-          responseMimeType: 'application/json',
-          temperature: 0.1, // low temperature for consistent JSON
-        },
+      const responseText = await callMultiProviderAI({
+        systemPrompt: ALLOCATION_SYSTEM_PROMPT,
+        userPrompt: prompt,
+        customApiKey,
+        responseJson: true,
       });
 
-      const responseText = response.text || '';
       // Clean up markdown block if present
       const cleanJson = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
       const parsedData = JSON.parse(cleanJson);
@@ -226,23 +221,18 @@ Lưu ý quy đổi số tiền và phần trăm một cách chính xác theo t�
     const customApiKey = req.headers['x-gemini-api-key'] as string | undefined;
 
     try {
-      const ai = getGeminiClient(customApiKey);
       const prompt = `Yêu cầu gợi ý side hustle phù hợp cho chuyên gia công nghệ/marketing người Việt:
 Ngành nghề chính: ${career_field || 'Tự do'}
 Kỹ năng hiện có: ${Array.isArray(skills) ? skills.join(', ') : 'Chưa cập nhật'}
 Thời gian nhàn rỗi mỗi tháng: ${monthly_free_hours || '40'} giờ`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
-        contents: prompt,
-        config: {
-          systemInstruction: SIDE_HUSTLE_SYSTEM_PROMPT,
-          responseMimeType: 'application/json',
-          temperature: 0.7,
-        },
+      const responseText = await callMultiProviderAI({
+        systemPrompt: SIDE_HUSTLE_SYSTEM_PROMPT,
+        userPrompt: prompt,
+        customApiKey,
+        responseJson: true,
       });
 
-      const responseText = response.text || '';
       const cleanJson = responseText.replace(/```json/gi, '').replace(/```/g, '').trim();
       const parsedData = JSON.parse(cleanJson);
       return res.json(parsedData);
@@ -334,23 +324,20 @@ Thời gian nhàn rỗi mỗi tháng: ${monthly_free_hours || '40'} giờ`;
     const customApiKey = req.headers['x-gemini-api-key'] as string | undefined;
 
     try {
-      const ai = getGeminiClient(customApiKey);
       const prompt = `Yêu cầu đánh giá tài chính tháng này:
 Thu nhập thực tế: ${income} VND
 Chi tiêu thực tế: ${expenses} VND
 Đã đầu tư thực tế: ${invested} VND
 Ghi chú của người dùng: ${notes || 'Không có ghi chú'}`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.5-flash',
-        contents: prompt,
-        config: {
-          systemInstruction: REVIEW_SYSTEM_PROMPT,
-          temperature: 0.6,
-        },
+      const review = await callMultiProviderAI({
+        systemPrompt: REVIEW_SYSTEM_PROMPT,
+        userPrompt: prompt,
+        customApiKey,
+        responseJson: false,
       });
 
-      return res.json({ review: response.text });
+      return res.json({ review });
     } catch (error: any) {
       console.warn('Gemini review API warning / error:', error.message);
 

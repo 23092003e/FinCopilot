@@ -1,140 +1,257 @@
-# 🌌 FinCopilot - Hệ Sinh Thái Hoàn Chỉnh Về Quản Lý Tài Chính Cá Nhân
-
-> **Cố vấn Phân bổ Tài sản & Tích sản Thông minh dành cho Lập trình viên và Thế hệ trẻ Việt Nam.**
-
-**FinCopilot** là một nền tảng quản lý tài chính cá nhân full-stack sâu sắc, hỗ trợ người dùng từ khi bắt đầu lập nghiệp, thiết kế bệ đỡ an toàn tài chính, định cấu hình danh mục tích sản định kỳ (DCA), cho đến thiết lập các mô hình kinh doanh phụ (Side Hustle) để gia tăng thu nhập chủ động. Hệ thống tích hợp nhuần nhuyễn trí tuệ nhân tạo (Generative AI) và cổng nhận giao dịch tự động qua Telegram/n8n để mang lại một trải nghiệm tối giản tuyệt đối nhưng cực kỳ khoa học.
+# 🌌 FinCopilot - AI Financial Co-pilot for Vietnamese Young Professionals
+> **Smart Wealth Allocation, Long-term DCA Tích sản, and Side Hustle Generator guided by Gemini AI.**
 
 ---
 
-## 🎨 Điểm Nhấn Thiết Kế (Design Philosophy)
-
-*   **Cosmic Midnight Canvas**: Trải nghiệm giao diện được bao phủ bởi chiều không gian tối huyền bí phân rã hạt bụi sao tương tác sinh động (`BackgroundUniverse`), kết hợp với sắc xanh ngọc lục bảo tinh tế (`emerald-500`) tạo cảm giác tin cậy và đậm chất công nghệ cao.
-*   **Trực Quan Hóa Tối Đa**: Toàn bộ biểu đồ phân bổ tài sản, tăng trưởng kép phi tuyến tính, và kịch bản đối chiếu tài sản được vẽ trực tiếp bằng `Recharts` hiệu năng cao, tối ưu hiển thị responsive đa điểm chạm từ thiết bị di động đến màn hình Ultra-wide.
-*   **Không Thừa, Không Thiếu**: Chú trọng tính chân thực tuyệt đối. Không lạm dụng dữ liệu giả lập (Larping), không hiện log terminal rác, mà thể hiện giá trị chân thực thông qua thiết kế chữ (Typography Pairings) thanh thoát giữa bộ đôi **Inter** hiển thị và **JetBrains Mono** chuyên dụng cho số liệu dòng tiền.
+*Scroll down or click here for the **[Vietnamese Version / Bản Tiếng Việt](#-fincopilot---trợ-lý-tài-chính-thông-minh-bằng-ai)**.*
 
 ---
 
-## ⚡ Công Nghệ & Kiến Trúc (Tech Stack)
+## 🇺🇸 English Version
 
-### 1. Frontend (Giao Diện Người Dùng)
-*   **React 19 & TypeScript 5**: Sử dụng kiến trúc hàm và Hook hiện đại nhất. Các thành phần được Module hóa tối đa tránh xung đột hàng tỷ token trong quá trình biên dịch.
-*   **Tailwind CSS v4.0 (Vite-Native)**: Ứng dụng plugin `@tailwindcss/vite` thế hệ mới cho phép nạp tài nguyên cực nhanh, cấu hình chủ đề (`@theme`) mượt mà và tối ưu hóaCSS Production đầu ra.
-*   **Motion React (Framer Motion v12)**: Xử lý hiệu ứng chuyển trang mượt mà, hoạt cảnh nạp bước Onboarding từng phần tinh tế.
-*   **Recharts**: Phát triển độc lập các Wrapper bảo vệ vòng đời component (Mounted Checks), giải quyết triệt để lỗi không đồng bộ kích thước canvas hiển thị trên iframe (`Warning: The width (-1) and height (-1) of chart should be greater than 0`).
+### What is it?
+**FinCopilot** is a full-stack, personal wealth management application tailored for young professionals, developers, and creators in Vietnam. It guides users from core financial onboarding, emergency fund structuring, and long-term Dollar-Cost Averaging (DCA/Tích sản) simulation, to AI-driven wealth allocation advice and customized "Side Hustle" business ideas. 
 
-### 2. Backend (Máy Chủ Tích Hợp)
-*   **Express 4.x & ESM Execution**: Máy chủ Express chạy trực tiếp bằng trình thông dịch siêu tốc `tsx` ở môi trường Dev.
-*   **CJS Build Model**: Trình đóng gói `esbuild` tự động tối ưu hóa và biên dịch toàn bộ cấu trúc máy chủ TypeScript thành tệp đơn nhất `/dist/server.cjs` ở môi trường Production, loại bỏ hoàn toàn các lỗi xung đột đường dẫn tương đối của ES Modules trên Node.js.
-*   **Cổng API Webhook**: Cung cấp API endpoint hiệu suất cao `/api/webhook/transaction` hỗ trợ khớp lệnh đẩy giao dịch tự động theo thời gian thực từ Telegram Bot hoặc kịch bản n8n cá nhân hóa.
-
-### 3. Trí Tuệ Nhân Tạo (AI Flight Deck)
-*   **Google GenAI SDK (`@google/genai`)**: Kết nối trực tiếp đến mô hình ngôn ngữ lớn **Gemini-3.5-Flash** với cấu hình lời nhắc hệ thống nghiêm ngặt (System Prompts) trả về JSON chính xác.
-*   **Smart Heuristics Fallback Engine**: Trong trường hợp không có mạng Internet, không có API Key, hoặc vượt hạn mức (Quota limit), bộ lọc heuristic thông minh tại máy chủ sẽ tự động kích hoạt để tính toán phân bổ dòng tiền và đưa ra phân tích tài chính sâu sắc bằng tiếng Việt dựa theo quy chuẩn tài chính của người trẻ.
-
-### 4. Cơ Sở Dữ Liệu & Xác Thực (Database & Auth)
-*   **Firebase Firestore**: Đồng bộ cấu trúc dữ liệu thời gian thực cho hồ sơ người dùng, danh mục tài khoản, nhật ký check-in hành vi thu chi, và giao dịch ledger.
-*   **Firebase Authentication**: Cổng xác thực bảo mật tiêu chuẩn cao tích hợp màn hình đăng nhập thanh lịch.
-*   **Local State Engine Backdrop**: Khi Firebase chưa liên kết hoặc cấu hình rỗng, hệ thống tự động bọc dòng dữ liệu fallback mặc định (Preset Profile của một siêu kỹ sư công nghệ 27 tuổi tại Việt Nam) giúp trải nghiệm thử nghiệm diễn ra lập tức mà không bị nghẽn trang khởi động.
+FinCopilot has a built-in transaction logging engine (Ledger) that accepts real-time automated webhook notifications (e.g., SMS alerts forwarded by Telegram Bot or n8n automated integration workflow) and supports intelligent periodic financial evaluations directly using Gemini-3.5-Flash.
 
 ---
 
-## 📁 Cấu Trúc Chi TIết Thư Mục (Project Structure)
+### Why should I use it?
+1. **Designed for Vietnam**: Handles Native Vietnamese currency (`₫` / `VND`) formatting, native bank rates, and typical asset classes (such as gold, high-yield bank deposits, VN30 index ETFs, and real estate).
+2. **Server-Side API security**: Keeps your Google Gemini API tokens completely hidden from the browser frontend using an Express proxy.
+3. **Automated Transactions (Zero Manual Hassle)**: Generate a unique webhook token to automatically pipe income or expenses into your ledger using n8n or generic messaging bots.
+4. **Heuristic Fallback System**: If you lack a Gemini API key or face server-side quota limits, a detailed local rule-set engine computes highly accurate allocations and recommendations tailored to your profile.
+5. **Cosmic Midnight Theme**: Beautiful responsive workspace featuring dynamic canvas stars and premium typography (Inter & JetBrains Mono), eliminating unnecessary UI clutter.
+
+---
+
+### Installation
+
+Ensure you have [Node.js (v18+)](https://nodejs.org/) installed before proceeding.
 
 ```bash
-├── .env.example                # Khung khai báo cấu hình môi trường
-├── firebase-applet-config.json # File cấu hình kết nối Firebase Applet
-├── firebase-blueprint.json    # Khung định hình dữ liệu Firestore
-├── firestore.rules             # Luật bảo mật phân quyền dữ liệu người dùng
-├── index.html                  # File HTML chính phục vụ khởi tạo Vite
-├── metadata.json               # Siêu dữ liệu khai báo quyền và khả năng với AI Studio
-├── package.json                # Quản lý script khởi chạy & khai báo gói phụ thuộc
-├── server.ts                   # Trực tiếp đảm nhận xử lý API full-stack và nạp luồng tĩnh
-├── tsconfig.json               # Cấu hình biên dịch TypeScript nghiêm ngặt
-├── vite.config.ts              # Trung tâm định cấu hình Vite & Tailwind Compiler
-├── src/
-│   ├── main.tsx                # Điểm nạp mã nguồn chính của React Client
-│   ├── App.tsx                 # Điều phối phân quyền Đăng nhập, Onboarding, định tuyến Tabs chính
-│   ├── index.css               # Hệ thống khai báo font chữ (Google Fonts) và biến Tailwind @theme
-│   ├── types.ts                # Khai báo định dạng kiểu dữ liệu dùng chung toàn hệ thống
-│   ├── components/             # Thư mục chứa các Component chi tiết
-│   │   ├── auth/               # Trình bao bọc màn hình đăng nhập (LoginScreen)
-│   │   ├── charts/             # Bộ sưu tập các biểu đồ phân tích (Mounted Guarded)
-│   │   │   ├── AllocationPieChart.tsx   # Biểu đồ tròn cơ cấu tài sản đề xuất
-│   │   │   ├── DCAGrowthChart.tsx       # Đường cong tăng trưởng quỹ tích sản DCA
-│   │   │   ├── NetWorthChart.tsx        # Biểu đồ cột chồng giá trị tài sản ròng
-│   │   │   └── ScenarioCompareChart.tsx # So sánh trực quan các tình huống tỷ suất sinh lời
-│   │   ├── forms/              # Trình tương tác biểu mẫu Onboarding 3 bước thông minh
-│   │   │   ├── OnboardingStep1.tsx      # Bước 1: Khai báo dữ liệu Tài chính cơ sở
-│   │   │   ├── OnboardingStep2.tsx      # Bước 2: Tầm soát và Khai báo rủi ro, dự định dài hạn
-│   │   │   └── OnboardingStep3.tsx      # Bước 3: Đánh giá Năng lực chuyên môn & Kỹ năng cốt lõi
-│   │   ├── layout/             # Định cấu hình khung thanh điều hướng
-│   │   │   ├── Sidebar.tsx              # Thanh bên trái thanh lịch (Hỗ trợ chuyển các Tab đa nhiệm)
-│   │   │   └── TopNav.tsx               # Thanh bên trên thể hiện trạng thái Firebase, Token Webhook
-│   │   └── shared/             # Các thành phần tái sử dụng nâng cao
-│   │       └── BackgroundUniverse.tsx   # Phông nền vũ trụ động sinh động bằng HTML Canvas
-│   ├── contexts/               # Bộ quản lý toàn cục State
-│   │   ├── AuthContext.tsx              # Theo dõi phiên đăng nhập của người dùng
-│   │   └── UIContext.tsx                # Chia sẻ trạng thái lướt mượt mà giữa các vùng giao diện
-│   ├── hooks/                  # Các xử lý logic nghiệp vụ tách biệt
-│   │   └── useProfile.ts                # Trái tim điều phối đồng bộ lưu trữ Local-first vs Firebase
-│   └── lib/                    # Lớp thư viện hỗ trợ truyền thông dữ liệu
-│       ├── firebase.ts                  # Khởi tạo Firestore/Auth và giám sát kết nối thực tế
-│       ├── openai/                      # Cổng định hướng bộ chuyển đổi Gemini Client
-│       │   ├── client.ts                # Quản lý khởi tạo lười (Lazy initialization) của Gemini SDK
-│       │   └── prompts.ts               # Bộ óc prompts tinh hoa định hình phân tích tài chính sâu sắc
-│       ├── supabase/                    # Chứa định nghĩa interfaces đồng nhất với mã nguồn cũ
-│       └── utils/                       # Bộ biến đổi chuỗi, định dạng phân cách mệnh giá VND
-└── public/                     # Chứa các tài nguyên hình ảnh tĩnh và icon thương hiệu
-```
+# 1. Clone or visit your repository folder
+cd fincopilot
 
----
-
-## 🚀 Hoạt Động Cốt Lõi Của Ứng Dụng (Page Operations)
-
-1.  **Dashboard**: Trung tâm quan sát nhanh. Cung cấp ước tính Tài Sản Ròng, Lượng Thặng Dư Hàng Tháng, phân loại rủi ro hiện tại và đưa ra cảnh báo hệ thống nhanh. Cho phép gửi Check-in đánh giá tài chính định kỳ theo tháng để nhận phân tích chi tiết của AI.
-2.  **Ledger (Sổ Thu Chi Hoàn Chỉnh)**:
-    *   Hỗ trợ ghi ghép thủ công trực diện với bộ phân loại trực quan (Thu nhập, Chi tiêu, Đầu tư tích sản).
-    *   **Automated Webhook Sync**: Cho phép người dùng lấy mã token riêng biệt tại trang Settings. Khi nạp token vào dịch vụ của Telegram Bot hoặc n8n, bất kỳ tin nhắn tin báo biến động số dư ngân hàng qua SMS hoặc giao dịch thủ công trên phím tắt Telegram sẽ tự động gửi thẳng về Ledger mà không làm xáo trộn quy trình làm việc. Bạn chỉ cần ấn một nút ở Ledger để phê duyệt giao dịch tự động nạp.
-3.  **Advisor (Cố Vấn Tài Sản)**: Nhận hồ sơ đầu vào của bạn tại Onboarding (được điều chỉnh linh hoạt trong trang Settings), gửi đến AI thông minh để nhận sơ đồ cơ cấu tài sản chi tiết (Quỹ dự phòng, Chứng chỉ quỹ ETF, Tiền mặt cơ hội, Vốn Side-Hustle, Phát triển Bản thân).
-4.  **Simulator & Scenarios (Mô Phỏng Tích Sản)**:
-    *   Cho phép tính toán kế hoạch tích lũy dài hạn kết hợp lãi kép định kỳ (DCA).
-    *   So sánh trực quan cơ hội lợi nhuận giữa các phương pháp: Chỉ giữ toàn bộ tiền mặt gửi ngân hàng truyền thống (`4% / năm`) vs. Danh mục phân bổ tài sản FinCopilot hỗn hợp (`9% / năm`) vs. Tích lũy tối đa cổ phần quỹ chỉ số ETF (`12% / năm`).
-5.  **Side Hustle (Kinh Doanh Phụ)**: Trực tiếp phân tích 3 tham số: Kỹ năng công nghệ hiện có của bạn + Quỹ thời gian rảnh mỗi tháng + Lĩnh vực công việc chính. AI sẽ tự động thiết lập và phác họa 5 lộ trình kinh doanh nhỏ từng bước cụ thể, ước tính khoảng cách tới dòng tiền đầu tiên và những công cụ hỗ trợ cần tập luyện.
-
----
-
-## 🛠️ Hướng Dẫn Sử Dụng & Khởi Chạy
-
-### 1. Cài đặt các gói phụ thuộc
-Nạp toàn bộ hệ sinh thái thư viện bổ trợ chỉ với một lệnh duy nhất:
-```bash
+# 2. Install all dependencies for both Express and React
 npm install
 ```
 
-### 2. Chạy môi trường phát triển (Local Development)
-Hệ thống sử dụng bộ chuyển mã TypeScript thời gian thực giúp khởi chạy cả Express Server song song với Vite Dev Server trên cổng duy nhất `3000`:
+---
+
+### Quick Start (copy-paste and run instantly)
+
+Copy and execute these commands in your console to run the application immediately:
+
 ```bash
+# 1. Declare your mock/local environment config
+cp .env.example .env
+
+# 2. Boot the full-stack development environment instantly!
 npm run dev
 ```
 
-### 3. Biên dịch Production
-Cấu trúc lệnh kép tự động gom thư viện React đầu tiên, sau đó gọi `esbuild` để dính liền toàn bộ các thành phần TypeScript API của máy chủ thành đầu ra CJS thống nhất:
-```bash
-npm run build
-```
+Open your browser at [http://localhost:3000](http://localhost:3000). The server runs the Express REST API and proxies assets through Vite automatically!
 
-### 4. Khởi động sản phẩm biên dịch
-Chạy trực tiếp máy chủ trung tâm để phân phối các luồng tĩnh cho khách hàng và liên thông API:
-```bash
-npm run start
+---
+
+### API Usage
+
+FinCopilot exposes backend endpoints on port `3000` to support remote webhook logging.
+
+#### 1. POST `/api/webhook/transaction`
+Send automatic bank balance alterations or custom transaction entries from remote agents (Telegam bots, n8n).
+
+* **Headers**:
+  * `Content-Type: application/json`
+  * `X-Webhook-Token: <your_private_token>` (or pass via `?token=<your_private_token>` query param)
+
+* **Request Body Payload**:
+```json
+{
+  "type": "expense",
+  "amount_vnd": 50000,
+  "category": "Ăn uống",
+  "description": "Bánh mì ăn sáng nhận từ Telegram"
+}
+```
+* **Supported Categories & Types**:
+  * `type`: `'income'` | `'expense'` | `'investment'`
+  * `amount_vnd`: Positive integer
+  * `category`: (Optional) Custom string
+
+---
+
+### Configuration
+
+Declare your configurations in the `.env` file inside your workspace root:
+
+```env
+# Gemini API Key (Required for AI generation, kept server-side only)
+GEMINI_API_KEY=your_google_gemini_api_key
+
+# Database Connectivity (Optional)
+# FinCopilot operates a local fallback engine seamlessly storing profiles
+# in LocalStorage if Firebase credentials aren't deployed.
 ```
 
 ---
 
-## 🔒 Quy chuẩn Tác vụ An toàn Môi trường
+### Development
 
-*   **API Keys**: Tuyệt đối không khai báo cứng API Key của Google Gemini (`GEMINI_API_KEY`) trên Client Web. Mọi tác vụ được chuyển tiếp thông minh thông qua các API endpoints trung gian đặt tại máy chủ Express backend để che giấu mã xác minh, thực hiện lazy-load và bọc bảo vệ hiệu quả phòng tránh tấn công đánh cắp phiên.
+* **Dev Commands**: Runs `server.ts` directly on TypeScript execute environment (`tsx`) alongside local Vite middleware:
+  ```bash
+  npm run dev
+  ```
+* **Production Build**: Compiles web bundle and bundles the TypeScript backend server into a single CJS binary (`dist/server.cjs`) to escape pathing errors:
+  ```bash
+  npm run build
+  ```
+* **Production Run**:
+  ```bash
+  npm run start
+  ```
+* **Coding Standards**: Pre-configured with Tailwind v4 `@theme` settings. Avoid using raw inline styles or extra CSS modules. Run linter before committing:
+  ```bash
+  npm run lint
+  ```
 
 ---
 
-*FinCopilot được chế tác để trở thành đòn bẩy tài chính bền vững nhất của bạn. Chúc bạn tích sản kiên trì và gặt hái độc lập tài chính sớm!* 🌌
+### Contributing
+We welcome developer feedback and structural improvements!
+1. Fork the codebase on your favorite Git provider.
+2. Build modular sub-components in `/src/components/` and keep `/src/App.tsx` slim.
+3. Test compatibility using `npm run lint` and `npm run build`.
+4. Open a clear Pull Request.
+
+---
+
+### License
+This project is licensed under the Apache-2.0 License. See the header declarations inside `/server.ts` or individual pages for full notice.
+
+---
+---
+
+## 🇻🇳 Bản Tiếng Việt
+
+## Nó là gì?
+**FinCopilot** là một nền tảng quản lý tài chính cá nhân toàn diện (Full-Stack) được thiết kế đặc thù cho giới trẻ công nghệ, lập trình viên và những nhà sáng tạo nội dung số tại Việt Nam.
+
+Hệ thống đưa bạn đi qua quy trình Onboarding xác mục tiêu tích lũy, tối ưu hóa quỹ an toàn tài chính cá nhân, mô phỏng sinh lời lãi kép qua DCA (Tích sản định kỳ), đồng thời đề xuất cơ cấu phân bổ dòng tiền và các đề án nghề tay trái (Side Hustle) bằng Trí tuệ Nhân tạo Gemini thông minh.
+
+---
+
+## Tại sao tôi nên sử dụng nó?
+1. **Thiết kế Định vị Việt Nam**: Hỗ trợ bản địa hóa tiếng Việt - Anh trực quan, xử lý mệnh giá Đồng tiền (`₫` / `VND`), ước tính các kênh đầu tư quen thuộc như Tiết kiệm kì hạn, Chứng chỉ quỹ ETF VN30, Vàng và Bất động sản.
+2. **Bảo mật Khoá API Tuyệt đối**: Khởi tạo lười (lazy-load) và thực thi cuộc gọi API Gemini-3.5-Flash tại Server-Side (Express backend), rũ bỏ rủi ro lộ khóa cá nhân trên trình duyệt client.
+3. **Sổ cái Ledger webhook siêu cấp**: Đồng bộ luồng giao dịch nhàn nhã thông qua Cổng Webhook riêng tư. Dễ dàng chuyển dịch tin nhắn biến động số dư SMS từ Telegram Bot hoặc n8n thẳng tới sổ chờ duyệt.
+4. **Mạng lưới cứu hộ Heuristic**: Nếu hệ thống chưa bật API Key hoặc gặp sự cố nghẽn mạng, thuật toán tài chính cục bộ Heuristic ưu việt sẽ tự động thế chỗ để đề xuất tỉ lệ vàng phân bổ tài sản chuẩn xác.
+5. **Giao diện Không Gian Huyền Bí (Cosmic Theme)**: Không gian làm việc tối thư thái kết hợp hiệu ứng bụi ngân hà tương tác sinh động bằng Canvas, dùng font chữ chữ chuyên dụng Inter và JetBrains Mono trang nhã cho số liệu.
+
+---
+
+## Cài đặt
+
+Yêu cầu máy tính cài đặt sẵn [Node.js (v18 trở lên)](https://nodejs.org/).
+
+```bash
+# 1. Truy cập thư mục chứa mã nguồn dự án
+cd fincopilot
+
+# 2. Cài đặt các thư viện phụ thuộc liên quan
+npm install
+```
+
+---
+
+## Quick Start (Copy-paste chạy được ngay)
+
+Chạy các lệnh bên dưới để khởi động nhanh ứng dụng:
+
+```bash
+# 1. Tạo tệp cấu hình môi trường từ bản tham chiếu cấu trúc
+cp .env.example .env
+
+# 2. Khởi chạy dự án tích hợp ngay lập tức!
+npm run dev
+```
+
+Tiếp theo, truy cập cổng trình duyệt nội bộ tại [http://localhost:3000](http://localhost:3000).
+
+---
+
+## Cách thức sử dụng API
+
+Hệ thống sử dụng cổng backend REST API lắng nghe các thông tin từ cổng ngoài đổ về.
+
+#### 1. Đăng ký giao dịch mới: POST `/api/webhook/transaction`
+Truyền tín hiệu giao dịch thu chi phát sinh trực tiếp từ Telegram Bot hoặc luồng tự động n8n.
+
+* **Headers**:
+  * `Content-Type: application/json`
+  * `X-Webhook-Token: <mã_token_cá_nhân_tại_settings>` (hoặc cung cấp dưới dạng tham số truy vấn `?token=<mã_token>`)
+
+* **Nội dung yêu cầu (Body JSON)**:
+```json
+{
+  "type": "expense",
+  "amount_vnd": 50000,
+  "category": "Ăn uống",
+  "description": "Bánh mì ăn sáng chuyển từ Telegram"
+}
+```
+* **Tham số hợp lệ**:
+  * `type`: `'income'` (Thu nhập) | `'expense'` (Chi tiêu) | `'investment'` (Tích sản/Đầu tư)
+  * `amount_vnd`: Số nguyên lớn hơn 0
+  * `category`: Nhãn phân loại loại hình chi tiêu (Không bắt buộc)
+
+---
+
+## Cấu hình
+
+Thiết lập các biến môi trường trực tiếp trong tệp tin `.env` ở gốc thư mục dự án:
+
+```env
+# Mã khóa trí tuệ nhân tạo (Bắt buộc để chạy các tính năng AI của Gemini)
+GEMINI_API_KEY=mã_api_key_gemini_của_bạn
+
+# Các cấu hình kết nối Firebase (Không bắt buộc)
+# Hệ thống hỗ trợ lưu trữ cục bộ Local-First thông minh và tự động đồng bộ 
+# sang đám mây Firestore khi bạn cập nhật tệp tin khởi tạo.
+```
+
+---
+
+## Phát triển
+
+* **Môi trường Dev**: Khởi động song hành Express Server và Vite Assets Proxy:
+  ```bash
+  npm run dev
+  ```
+* **Đóng gói phân phối (Build)**: Tế hợp toàn bộ mã đầu ra React kết hợp `esbuild` bọc máy chủ thành dạng đơn nhân `/dist/server.cjs` bảo đảm tốc độ khởi hành tối ưu:
+  ```bash
+  npm run build
+  ```
+* **Chạy Production**:
+  ```bash
+  npm run start
+  ```
+* **Tiêu chuẩn lập trình**: Mã nguồn sử dụng Tailwind CSS v4.0. Tránh sinh thêm tệp tin `.css` con ngoài luồng hoặc can thiệp bừa bãi vào hệ thống styles mặc định. Hãy tiến hành quét linter trước khi commit:
+  ```bash
+  npm run lint
+  ```
+
+---
+
+## Đóng góp
+Chúng tôi hoan nghênh mọi đóng góp của cộng đồng lập trình viên tài chính!
+1. Tạo một nhánh rẽ (Fork) từ nhánh chính của kho lưu trữ.
+2. Đóng góp tách biệt thông qua các files độc lập bên trong `/src/components/`, tránh dồn nén toàn bộ logic vào `App.tsx`.
+3. Chạy kiểm tra kỹ thuật bằng: `npm run lint` và `npm run build` trước khi đề đạt tích hợp.
+4. Gửi một yêu cầu Pull Request rõ ràng mô tả các đóng góp cải tiến của bạn.
+
+---
+
+## Bản quyền
+Dự án được phân phối chính thức theo giấy phép mã nguồn mở Apache-2.0. Xem chi tiết thông số bảo hộ bản quyền khai báo ở đầu trang mã nguồn và tập tin `/server.ts`.

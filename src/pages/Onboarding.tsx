@@ -8,7 +8,7 @@ import { PageHeader } from '../components/layout/PageHeader';
 import { OnboardingStep1 } from '../components/forms/OnboardingStep1';
 import { OnboardingStep2 } from '../components/forms/OnboardingStep2';
 import { OnboardingStep3 } from '../components/forms/OnboardingStep3';
-import { Profile } from '../lib/supabase/types';
+import { Profile } from '../types';
 import { Save, CheckCircle, ShieldAlert } from 'lucide-react';
 import { useUI } from '../contexts/UIContext';
 

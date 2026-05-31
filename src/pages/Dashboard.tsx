@@ -10,7 +10,7 @@ import { AllocationPieChart } from '../components/charts/AllocationPieChart';
 import { EmergencyFundAlert } from '../components/shared/EmergencyFundAlert';
 import { formatVND } from '../lib/utils/vnd';
 import { emergencyFundStatus } from '../lib/utils/finance';
-import { AllocationResponse, Checkin, Profile, Transaction } from '../lib/supabase/types';
+import { AllocationResponse, Checkin, Profile, Transaction } from '../types';
 import { Calendar, Wallet, TrendingUp, HandCoins, HelpCircle, Loader2, Zap } from 'lucide-react';
 import { useUI } from '../contexts/UIContext';
 import Markdown from 'react-markdown';

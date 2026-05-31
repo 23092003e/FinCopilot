@@ -110,4 +110,3 @@ export interface Transaction {
   date: string; // YYYY-MM-DD
   created_at: string;
 }
-

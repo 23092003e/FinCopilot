@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { PageHeader } from '../components/layout/PageHeader';
-import { AllocationResponse, Profile } from '../lib/supabase/types';
+import { AllocationResponse, Profile } from '../types';
 import { LoadingAI } from '../components/shared/LoadingAI';
 import { formatVND } from '../lib/utils/vnd';
 import { Sparkles, AlertTriangle, HelpCircle, ShieldCheck, Landmark, TrendingUp, Cpu, Landmark as CashIcon } from 'lucide-react';

@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { Menu, X, Flame, ShieldAlert, CheckCircle, LogOut, Sun, Moon, Globe, Download } from 'lucide-react';
-import { Profile } from '../../lib/supabase/types';
+import { Profile } from '../../types';
 import { formatVND } from '../../lib/utils/vnd';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';

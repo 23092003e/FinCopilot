@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { AllocationResponse } from '../../lib/supabase/types';
+import { AllocationResponse } from '../../types';
 import { formatVND } from '../../lib/utils/vnd';
 
 interface AllocationPieChartProps {

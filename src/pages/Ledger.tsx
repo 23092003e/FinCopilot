@@ -7,7 +7,7 @@ import React, { useState, useMemo } from 'react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { VNDInput } from '../components/shared/VNDInput';
 import { useUI } from '../contexts/UIContext';
-import { Transaction, Checkin } from '../lib/supabase/types';
+import { Transaction, Checkin } from '../types';
 import { 
   Receipt, Plus, Trash2, TrendingUp, TrendingDown, Sparkles, 
   Calendar, CreditCard, ChevronRight, CheckCircle2, AlertTriangle, Zap, ArrowRight, ArrowUpRight

@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { PageHeader } from '../components/layout/PageHeader';
-import { Profile } from '../lib/supabase/types';
+import { Profile } from '../types';
 import { VNDInput } from '../components/shared/VNDInput';
 import { User, Eye, EyeOff, RotateCcw, ShieldCheck, Check, Sparkles, Key } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';

@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Profile, AllocationResponse, SideHustleIdea, Checkin, Transaction } from '../lib/supabase/types';
+import { Profile, AllocationResponse, SideHustleIdea, Checkin, Transaction } from '../types';
 
 // Standard high-quality presets for Vietnamese early-career professionals (e.g. tech engineer, age 27, saving 150M)
 const PRESET_PROFILE: Profile = {

@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { PageHeader } from '../components/layout/PageHeader';
-import { SideHustleIdea, Profile } from '../lib/supabase/types';
+import { SideHustleIdea, Profile } from '../types';
 import { LoadingAI } from '../components/shared/LoadingAI';
 import { formatVND } from '../lib/utils/vnd';
 import { Sparkles, Calendar, Zap, AlertCircle, Laptop, Wrench, ShieldQuestion, HelpCircle } from 'lucide-react';

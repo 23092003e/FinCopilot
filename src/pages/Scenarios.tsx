@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { ScenarioCompareChart } from '../components/charts/ScenarioCompareChart';
 import { formatVND } from '../lib/utils/vnd';
-import { Profile } from '../lib/supabase/types';
+import { Profile } from '../types';
 import { TrendingUp, AlertTriangle, Coins, BarChart3 } from 'lucide-react';
 
 interface ScenariosProps {

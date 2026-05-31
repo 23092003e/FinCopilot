@@ -214,7 +214,7 @@ export function OnboardingStep3({ data, onChange, onFinish, onPrev }: Onboarding
               value={skillInput}
               onChange={(e) => setSkillInput(e.target.value)}
               placeholder="Thêm kỹ năng khác..."
-              className="bg-zinc-900 outline-none border border-zinc-800 rounded px-2.5 py-1 text-xs flex-1 text-zinc-100 placeholder-zinc-650"
+              className="bg-zinc-900 outline-none border border-zinc-800 rounded px-2.5 py-1 text-xs flex-1 text-zinc-100 placeholder-zinc-500"
             />
             <button
               type="submit"

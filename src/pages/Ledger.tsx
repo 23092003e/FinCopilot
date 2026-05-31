@@ -483,7 +483,7 @@ export function Ledger({
               <TrendingDown className="w-3.5 h-3.5" />
             </span>
           </div>
-          <span className="text-[9px] text-zinc-650 text-zinc-500 font-mono block">
+          <span className="text-[9px] text-zinc-400 font-mono block">
             {language === 'vi' ? `Tỷ lệ hấp thụ: ${stats.totalIncome > 0 ? ((stats.totalExpense / stats.totalIncome) * 100).toFixed(0) : 0}% thu nhập` : `Utilizing: ${stats.totalIncome > 0 ? ((stats.totalExpense / stats.totalIncome) * 100).toFixed(0) : 0}% of income`}
           </span>
         </div>
@@ -618,7 +618,7 @@ export function Ledger({
                     setFormError('');
                   }}
                   placeholder={language === 'vi' ? 'Ví dụ: Đóng tiền nước nhà, Ăn phở sáng...' : 'e.g., Grocery shopping, Salary bonus...'}
-                  className="w-full bg-zinc-950/60 border border-zinc-800/80 text-zinc-100 rounded-xl py-2.5 px-3.5 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 font-medium text-xs transition-all placeholder-zinc-650"
+                  className="w-full bg-zinc-950/60 border border-zinc-800/80 text-zinc-100 rounded-xl py-2.5 px-3.5 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 font-medium text-xs transition-all placeholder-zinc-500"
                 />
               </div>
 
@@ -740,7 +740,7 @@ export function Ledger({
                 <p className="text-zinc-500 text-xs font-semibold">
                   {language === 'vi' ? 'Không tìm thấy giao dịch nào tương xứng.' : 'No matched transactions found.'}
                 </p>
-                <p className="text-[11px] text-zinc-650">
+                <p className="text-[11px] text-zinc-400">
                   {language === 'vi' ? 'Hãy ghi chép các thu chi đầu tiên của bạn ở bảng bên trái.' : 'Start recording items in the box on your left.'}
                 </p>
               </div>

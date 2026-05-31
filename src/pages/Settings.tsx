@@ -305,7 +305,7 @@ export function Settings({ profile, updateProfile, resetAllData }: SettingsProps
           <button
             onClick={() => handleReset(true)}
             disabled={resettingStatus}
-            className="flex-1 py-2.5 px-4 bg-red-650 hover:bg-red-600 text-white font-black rounded text-[11px] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm border border-red-500/25 active:scale-95"
+            className="flex-1 py-2.5 px-4 bg-red-700 hover:bg-red-600 text-white font-black rounded text-[11px] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm border border-red-500/25 active:scale-95"
           >
             {resettingStatus ? (
               <span>{language === 'vi' ? 'Đang giải phóng bộ nhớ...' : 'Purging database...'}</span>

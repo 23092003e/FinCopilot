@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   BarChart,
   Bar,
@@ -31,6 +31,11 @@ export function ScenarioCompareChart({
   bankReturn = 4,
   mixedReturn = 9,
 }: ScenarioCompareChartProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   // Calculate compounded wealth at N years with monthly additions
   const compoundBalance = (monthly: number, annualRate: number, years: number) => {
@@ -76,12 +81,13 @@ export function ScenarioCompareChart({
       </div>
 
       <div className="flex-1 min-h-[220px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={chartData}
-            margin={{ top: 20, right: 10, left: 0, bottom: 0 }}
-            barSize={16}
-          >
+        {mounted && (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={chartData}
+              margin={{ top: 20, right: 10, left: 0, bottom: 0 }}
+              barSize={16}
+            >
             <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
             <XAxis
               dataKey="milestone"
@@ -149,6 +155,7 @@ export function ScenarioCompareChart({
             />
           </BarChart>
         </ResponsiveContainer>
+        )}
       </div>
     </div>
   );

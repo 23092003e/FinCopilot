@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { AllocationResponse } from '../../lib/supabase/types';
 import { formatVND } from '../../lib/utils/vnd';
@@ -43,6 +43,11 @@ const CATEGORY_MAP: Record<string, { label: string; color: string; description: 
 export function AllocationPieChart({ data }: AllocationPieChartProps) {
   const { allocation } = data;
   const [selectedKey, setSelectedKey] = useState<string>('etf_dca');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const chartData = Object.entries(allocation).map(([key, item]) => {
     const info = CATEGORY_MAP[key] || { label: key, color: '#6b7280', description: '' };
@@ -72,8 +77,9 @@ export function AllocationPieChart({ data }: AllocationPieChartProps) {
       {/* Recharts Pie Section */}
       <div className="w-full lg:w-1/2 flex flex-col items-center">
         <div className="relative w-64 h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
+          {mounted && (
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
               <Pie
                 data={chartData}
                 cx="50%"
@@ -115,6 +121,7 @@ export function AllocationPieChart({ data }: AllocationPieChartProps) {
               />
             </PieChart>
           </ResponsiveContainer>
+          )}
           {/* Central Label */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none">
             <span className="text-zinc-500 text-xs uppercase tracking-widest">Tổng phân bổ</span>

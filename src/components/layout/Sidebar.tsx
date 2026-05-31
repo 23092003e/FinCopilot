@@ -106,7 +106,7 @@ export function Sidebar({ activeTab, setActiveTab, onboardingCompleted = true }:
         </button>
 
         <div className="text-center">
-          <p className="text-[10px] text-zinc-650 text-zinc-650 font-mono">
+          <p className="text-[10px] text-zinc-400 font-mono">
             {t('nav.developed_by')}
           </p>
           <span className="text-[9px] text-zinc-500">

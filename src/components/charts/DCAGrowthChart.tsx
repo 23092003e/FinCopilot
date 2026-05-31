@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AreaChart,
   Area,
@@ -23,6 +23,11 @@ interface DCAGrowthChartProps {
 }
 
 export function DCAGrowthChart({ data }: DCAGrowthChartProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   // Format Y Axis ticks (e.g. 500M, 2B ₫)
   const formatYAxisTick = (value: number) => {
     if (value === 0) return '0 ₫';
@@ -56,11 +61,12 @@ export function DCAGrowthChart({ data }: DCAGrowthChartProps) {
       </div>
 
       <div className="flex-1 min-h-[220px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart
-            data={data}
-            margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-          >
+        {mounted && (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart
+              data={data}
+              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+            >
             <defs>
               <linearGradient id="colorNominal" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#10b981" stopOpacity={0.25} />
@@ -166,6 +172,7 @@ export function DCAGrowthChart({ data }: DCAGrowthChartProps) {
             />
           </AreaChart>
         </ResponsiveContainer>
+      )}
       </div>
     </div>
   );

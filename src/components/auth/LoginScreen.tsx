@@ -26,7 +26,10 @@ import {
   FileSpreadsheet, 
   PiggyBank, 
   BrainCircuit,
-  ArrowLeft
+  ArrowLeft,
+  X,
+  HelpCircle,
+  CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -42,6 +45,104 @@ export function LoginScreen() {
   const [displayName, setDisplayName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Selected pillar for detail modal
+  const [activePillarNode, setActivePillarNode] = useState<string | null>(null);
+
+  const pillarsDetails = {
+    cashflow: {
+      titleVi: 'Thẩm định Dòng tiền & Sổ chi tiêu',
+      titleEn: 'Cashflow & Ledger Audit',
+      subtitleVi: 'Khám phá cách FinCopilot dọn dẹp và thắt chặt dòng tiền nhàn rỗi của bạn.',
+      subtitleEn: 'Explore how FinCopilot cleanses and secures your idle monthly capital.',
+      icon: <FileSpreadsheet className="w-8 h-8 text-emerald-400" />,
+      color: 'emerald',
+      bgColor: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
+      bulletsVi: [
+        { label: 'Ghi chép giao dịch cấp tốc', desc: 'Hỗ trợ ghi chép thủ công đơn giản hoặc tích hợp nhập dữ liệu tự động.' },
+        { label: 'Đồng bộ Telegram Bot & n8n', desc: 'Bản vẽ API webhook thực tế cho phép chuyển tin nhắn mô tả thường ngày thành JSON gửi trực tiếp về sổ chi tiết để duyệt.' },
+        { label: 'Phân tích tỷ lệ phân bổ rổ', desc: 'Tự động kiểm đếm lượng thặng dư thực tế dựa trên đầu vào thu nhập trừ đi chi phí hoạt động thực sự phát sinh.' },
+        { label: 'Hàng chờ duyệt giao dịch n8n', desc: 'Sau khi Telegram gửi tin nhắn về webhook, hệ thống hiển thị hàng chờ duyệt tại sổ cái để bạn tùy chọn duyệt hoặc bỏ qua cực kỳ bảo mật.' }
+      ],
+      bulletsEn: [
+        { label: 'High-speed Transaction Entry', desc: 'Supports straightforward manual additions or highly customizable automated pipelines.' },
+        { label: 'Full Telegram Bot & n8n Sync', desc: 'Comes with functional webhook endpoints that automatically convert natural speech conversations directly into JSON assets.' },
+        { label: 'Survival Expense Scoring', desc: 'Instantly computes absolute savings ratios based on monthly earnings subtract actual expenses.' },
+        { label: 'Interactive Pending Queue', desc: 'Enables quick 1-click approvals for inbound Telegram logs directly above the live charts ledger.' }
+      ],
+      footerVi: 'Gợi ý: Trực tiếp cấu hình API webhook này tại hướng dẫn nằm trong màn hình "Ghi Sổ Giao Dịch" sau khi Đăng nhập.',
+      footerEn: 'Tip: Configure this API webhook directly within the setup guide of the "Ledger" tab after logging in.'
+    },
+    allocation: {
+      titleVi: 'Cố vấn Phân bổ & Thẩm định Cơ cấu Tài sản',
+      titleEn: 'Smart Capital & Index Allocation Advisor',
+      subtitleVi: 'AI tư vấn chuyên sâu cấu trúc rổ dự phòng, quỹ khảnh cấp vắc-xin tài chính và tích sản dài hạn.',
+      subtitleEn: 'AI-driven advisory to structure personalized safety nets and compounding buckets.',
+      icon: <BrainCircuit className="w-8 h-8 text-cyan-400" />,
+      color: 'cyan',
+      bgColor: 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400',
+      bulletsVi: [
+        { label: 'Cá nhân hóa theo khẩu vị rủi ro & tuổi tác', desc: 'AI phân bổ dựa trên chuyên môn nghề nghiệp, tình trạng nợ và kiến thức đầu tư hiện có.' },
+        { label: 'Bảo vệ quỹ khẩn cấp chặt chẽ', desc: 'Tính toán chính xác số tháng sinh tồn bảo đảm cho bản thân và gia đình dựa vào chi phí định kỳ.' },
+        { label: 'Tối ưu danh mục đầu tư thụ động', desc: 'Đề xuất phân phối tỷ trọng giữa tiết kiệm an toàn, tích lũy vàng phòng thủ, và tích sản chứng chỉ quỹ chỉ số ETF Việt Nam & thế giới.' },
+        { label: 'Bản đồ chênh lệch cơ cấu tài sản', desc: 'So sánh cơ cấu thực tế so với cơ cấu tối ưu khuyến nghị một cách rõ ràng giúp định hướng tái cân bằng kịp thời.' }
+      ],
+      bulletsEn: [
+        { label: 'Profile Customized Scoring', desc: 'Matches career field, age vector, and savings thresholds to design custom safety envelopes.' },
+        { label: 'Emergency Fund Protection', desc: 'Calculates the exact number of baseline survival months based on average expenditures.' },
+        { label: 'Index & Balanced Portfolio Design', desc: 'Designs targeted asset distributions of steady savings, gold, and broad-market ETF baskets.' },
+        { label: 'Visual Discrepancy Analysis', desc: 'Displays structured real-time charts to spot exactly where your funds are unallocated.' }
+      ],
+      footerVi: 'Gợi ý: Lời khuyên kết hợp bộ khung quản trị tài sản chuyên nghiệp quốc tế và cơ chế lập luận ngữ cảnh của Gemini AI.',
+      footerEn: 'Tip: Portfolio guidance utilizes classic asset frameworks and dynamic reasoning capabilities of Gemini AI.'
+    },
+    dca: {
+      titleVi: 'Giả lập DCA Lãi kép & Sức mua Lạm phát',
+      titleEn: 'DCA Compound Interest & Inflation Simulator',
+      subtitleVi: 'Mô phỏng bức tranh tài sản tích sản tịnh tiến hằng chục năm tới có trừ lạm phát thực tế.',
+      subtitleEn: 'Gaze into the precise compounding trajectory of your systematic savings over decades.',
+      icon: <TrendingUp className="w-8 h-8 text-indigo-400" />,
+      color: 'indigo',
+      bgColor: 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400',
+      bulletsVi: [
+        { label: 'Khử tác động lạm phát tiêu dùng', desc: 'Không vẽ ra những con số ảo tượng. Thuật toán tự động giảm phát giá trị tích lũy tương lai về giá trị sức mua hiện tại.' },
+        { label: 'Giả lập DCA kỷ luật đối kháng vô kỷ luật', desc: 'So sánh trực quan kịch bản bỏ cuộc định kỳ so với thói quen trích thặng dư đều đặn bình quân giá hằng tháng.' },
+        { label: 'Thanh trượt tham số thời gian thực', desc: 'Tinh chỉnh nhanh số năm, lãi suất kỳ vọng, lượng tích lũy hằng tháng để biểu đồ biểu diễn thay đổi tức thì.' },
+        { label: 'Giao điểm tự do tài chính (FI)', desc: 'Xác định thời điểm cụ thể nguồn thu nhập thụ động do lãi kép tự sinh đủ bù đắp hoàn toàn chi phí tối thiểu hằng ngày.' }
+      ],
+      bulletsEn: [
+        { label: 'Real Inflation De-valuation', desc: 'Deflates future sums dynamically so you estimate purchasing power in today\'s currency standards.' },
+        { label: 'Structured vs. Erratic Investing', desc: 'Compares random saving spikes against strict monthly dollar-cost averaging habits.' },
+        { label: 'Instant Real-time Sliders', desc: 'Tune expected yield rates, monthly additions, and simulation windows with fluid timeline graphs.' },
+        { label: 'Milestone Intersection Detection', desc: 'Highlights the exact retirement transition date when investment dividends bypass basic expenses.' }
+      ],
+      footerVi: 'Gợi ý: Dụng cụ giả lập dùng đồ thị mượt mà hỗ trợ tương tác rê chuột tại từng điểm nốt để xem chi tiết số dư.',
+      footerEn: 'Tip: Interactive charts offer accurate tooltip details upon hovering on any year of the timeline.'
+    },
+    sidehustle: {
+      titleVi: 'AI Gợi ý Ý tưởng Thu nhập Phụ Freelance',
+      titleEn: 'AI Side Hustle Blueprint Generator',
+      subtitleVi: 'Sử dụng đòn bẩy AI để tối ưu hiệu suất, gia tăng lượng tiền bơm vào rổ tiết kiệm tích sản.',
+      subtitleEn: 'Unlock exponential income flows of digital side hustles under systematic step plans.',
+      icon: <Zap className="w-8 h-8 text-purple-400" />,
+      color: 'purple',
+      bgColor: 'bg-purple-500/10 border-purple-500/20 text-purple-400',
+      bulletsVi: [
+        { label: 'Dựa theo thế mạnh kỹ năng thực tế', desc: 'AI quét qua tập kỹ năng nghề nghiệp bạn ghi nhận tại hồ sơ (ví dụ: Coding, Thiết kế, Copywriting...) để tìm dạng nghề phụ sinh lời.' },
+        { label: 'Cẩm nang 5 bước áp dụng Trí tuệ Nhân tạo', desc: 'Hướng dẫn chính xác cách dùng các mô hình LLM, Midjourney hoặc Automation để đẩy nhanh tốc độ phục vụ khách hàng.' },
+        { label: 'Tính toán hiệu năng sử dụng thời gian', desc: 'Thông tin rõ ràng số giờ cần bỏ thêm mỗi tuần và tỷ lệ đóng góp tăng trưởng danh mục thặng dư hằng năm.' },
+        { label: 'Bơm trực tiếp tài sản vào rổ DCA', desc: 'Giúp bạn dễ dàng thấy lượng tiền từ công việc thứ hai trực tiếp đẩy nhanh lộ trình đạt tự do tài chính như thế nào.' }
+      ],
+      bulletsEn: [
+        { label: 'Skill-targeted Monetization', desc: 'Scans your declared core technical and creative strengths to isolate viable high-ticket services.' },
+        { label: 'Operational AI Playbooks', desc: 'Provides actionable instructions guides on employing generative models for rapid content and development scale.' },
+        { label: 'Optimized Time Allocation', desc: 'Establishes precise project hour estimates needed per week to match reasonable income benchmarks.' },
+        { label: 'Direct Compounding Inflow', desc: 'Pipes your earned extra revenue directly into the compound cash registers of your long-term ledger.' }
+      ],
+      footerVi: 'Gợi ý: Gia tăng Inflow hằng tháng chính là chìa khóa vàng giúp kéo ngắn thời gian của giả lập DCA.',
+      footerEn: 'Tip: Raising monthly cash inflows is the absolute fastest way to accelerate your DCA simulations.'
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,12 +284,18 @@ export function LoginScreen() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               
               {/* Pillar 1: Flow Review */}
-              <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-950/40 hover:border-zinc-700/60 transition-all duration-200 group">
+              <div 
+                onClick={() => setActivePillarNode('cashflow')}
+                className="p-4 rounded-xl border border-zinc-800 bg-zinc-950/40 hover:bg-zinc-900/35 hover:border-emerald-500/40 active:scale-[0.99] transition-all duration-250 group cursor-pointer relative overflow-hidden"
+              >
+                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-emerald-500/10 text-emerald-400 text-[9px] font-bold font-mono px-2 py-0.5 rounded border border-emerald-500/25">
+                  {language === 'vi' ? 'Xem chi tiết →' : 'Learn more →'}
+                </div>
                 <div className="flex gap-3">
                   <div className="p-2 w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-200">
                     <FileSpreadsheet className="w-5 h-5" />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1 pr-4">
                     <h3 className="text-sm font-bold text-zinc-200">{language === 'vi' ? 'Thẩm định Dòng tiền' : 'Cashflow Audit'}</h3>
                     <p className="text-zinc-500 text-xs leading-relaxed">
                       {language === 'vi' 
@@ -200,13 +307,19 @@ export function LoginScreen() {
               </div>
 
               {/* Pillar 2: AI Advisor */}
-              <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-950/40 hover:border-zinc-700/60 transition-all duration-200 group">
+              <div 
+                onClick={() => setActivePillarNode('allocation')}
+                className="p-4 rounded-xl border border-zinc-800 bg-zinc-950/40 hover:bg-zinc-900/35 hover:border-cyan-500/40 active:scale-[0.99] transition-all duration-250 group cursor-pointer relative overflow-hidden"
+              >
+                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-cyan-500/10 text-cyan-400 text-[9px] font-bold font-mono px-2 py-0.5 rounded border border-cyan-500/25">
+                  {language === 'vi' ? 'Xem chi tiết →' : 'Learn more →'}
+                </div>
                 <div className="flex gap-3">
                   <div className="p-2 w-10 h-10 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-200">
                     <BrainCircuit className="w-5 h-5" />
                   </div>
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-bold text-zinc-200">{language === 'vi' ? 'Cơ cấu phân bổ Tối ưu' : 'Smart Capital Allocation'}</h3>
+                  <div className="space-y-1 pr-4">
+                    <h3 className="text-sm font-bold text-zinc-200">{language === 'vi' ? 'Thẩm định kiêm Cơ cấu' : 'Smart Capital Allocation'}</h3>
                     <p className="text-zinc-500 text-xs leading-relaxed">
                       {language === 'vi' 
                         ? 'Cân đối rổ tài sản dự phòng và tích sản chỉ số ETF dựa vào khẩu vị rủi ro và lĩnh vực chuyên môn.' 
@@ -217,12 +330,18 @@ export function LoginScreen() {
               </div>
 
               {/* Pillar 3: DCA Simulator */}
-              <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-950/40 hover:border-zinc-700/60 transition-all duration-200 group">
+              <div 
+                onClick={() => setActivePillarNode('dca')}
+                className="p-4 rounded-xl border border-zinc-800 bg-zinc-950/40 hover:bg-zinc-900/35 hover:border-indigo-500/40 active:scale-[0.99] transition-all duration-250 group cursor-pointer relative overflow-hidden"
+              >
+                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-indigo-500/10 text-indigo-400 text-[9px] font-bold font-mono px-2 py-0.5 rounded border border-indigo-500/25">
+                  {language === 'vi' ? 'Xem chi tiết →' : 'Learn more →'}
+                </div>
                 <div className="flex gap-3">
                   <div className="p-2 w-10 h-10 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-200">
                     <TrendingUp className="w-5 h-5" />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1 pr-4">
                     <h3 className="text-sm font-bold text-zinc-200">{language === 'vi' ? 'Giả lập Kỷ luật DCA' : 'Compound DCA Engine'}</h3>
                     <p className="text-zinc-500 text-xs leading-relaxed">
                       {language === 'vi' 
@@ -234,12 +353,18 @@ export function LoginScreen() {
               </div>
 
               {/* Pillar 4: AI Side Hustles */}
-              <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-950/40 hover:border-zinc-700/60 transition-all duration-200 group">
+              <div 
+                onClick={() => setActivePillarNode('sidehustle')}
+                className="p-4 rounded-xl border border-zinc-800 bg-zinc-950/40 hover:bg-zinc-900/35 hover:border-purple-500/40 active:scale-[0.99] transition-all duration-250 group cursor-pointer relative overflow-hidden"
+              >
+                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-purple-500/10 text-purple-400 text-[9px] font-bold font-mono px-2 py-0.5 rounded border border-purple-500/25">
+                  {language === 'vi' ? 'Xem chi tiết →' : 'Learn more →'}
+                </div>
                 <div className="flex gap-3">
                   <div className="p-2 w-10 h-10 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-200">
                     <Zap className="w-5 h-5" />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1 pr-4">
                     <h3 className="text-sm font-bold text-zinc-200">{language === 'vi' ? 'Ý tưởng Thu nhập Phụ' : 'AI Side Hustles'}</h3>
                     <p className="text-zinc-500 text-xs leading-relaxed">
                       {language === 'vi' 
@@ -501,8 +626,98 @@ export function LoginScreen() {
           </div>
         </div>
         <p>{language === 'vi' ? 'Mã hóa cục bộ SSL kết hợp hệ mã bảo mật Firebase.' : 'Encrypted with client-side SSL and Firebase identity keys.'}</p>
-        <p className="text-zinc-650">{language === 'vi' ? 'Hạ tầng: Cloud Secure Pro' : 'Infrastructure status: Cloud Secure Pro'}</p>
+        <p className="text-zinc-400">{language === 'vi' ? 'Hạ tầng: Cloud Secure Pro' : 'Infrastructure status: Cloud Secure Pro'}</p>
       </motion.div>
+
+      {/* 4. Pillars detailed modal explanations */}
+      <AnimatePresence>
+        {activePillarNode && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-md"
+            onClick={() => setActivePillarNode(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 15, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.95, y: 15, opacity: 0 }}
+              transition={{ type: "spring", duration: 0.4 }}
+              className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                onClick={() => setActivePillarNode(null)}
+                className="absolute top-4 right-4 p-2 rounded-lg bg-zinc-950 border border-zinc-800 hover:border-zinc-700/80 text-zinc-400 hover:text-white transition-all cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              {/* Header block with colored backdrop icon */}
+              <div className="p-6 border-b border-zinc-950 bg-zinc-950/35 flex items-start gap-4">
+                <div className={`p-3.5 rounded-xl border shrink-0 ${pillarsDetails[activePillarNode as keyof typeof pillarsDetails].bgColor}`}>
+                  {pillarsDetails[activePillarNode as keyof typeof pillarsDetails].icon}
+                </div>
+                <div className="space-y-1 pr-6">
+                  <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest font-mono">
+                    {language === 'vi' ? 'HƯỚNG DẪN CHI TIẾT TÍNH NĂNG' : 'DETAILED FEATURE EXPLANATION'}
+                  </span>
+                  <h3 className="text-base font-extrabold text-white">
+                    {language === 'vi' 
+                      ? pillarsDetails[activePillarNode as keyof typeof pillarsDetails].titleVi 
+                      : pillarsDetails[activePillarNode as keyof typeof pillarsDetails].titleEn}
+                  </h3>
+                  <p className="text-zinc-300 text-xs font-semibold">
+                    {language === 'vi' 
+                      ? pillarsDetails[activePillarNode as keyof typeof pillarsDetails].subtitleVi 
+                      : pillarsDetails[activePillarNode as keyof typeof pillarsDetails].subtitleEn}
+                  </p>
+                </div>
+              </div>
+
+              {/* Bullets lists of possibilities */}
+              <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+                <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">
+                  {language === 'vi' ? '🎯 Tính năng cốt lõi & Khả năng làm việc:' : '🎯 Core Features & Scope:'}
+                </span>
+
+                <div className="space-y-3">
+                  {(language === 'vi' 
+                    ? pillarsDetails[activePillarNode as keyof typeof pillarsDetails].bulletsVi 
+                    : pillarsDetails[activePillarNode as keyof typeof pillarsDetails].bulletsEn
+                  ).map((bullet, idx) => (
+                    <div key={idx} className="flex gap-3 items-start bg-zinc-950/45 p-3 rounded-xl border border-zinc-800 transition-colors hover:border-zinc-700">
+                      <div className="p-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/10 mt-0.5 shrink-0">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="space-y-0.5">
+                        <h4 className="text-sm font-extrabold text-zinc-100">
+                          {bullet.label}
+                        </h4>
+                        <p className="text-xs text-zinc-300 font-medium leading-relaxed">
+                          {bullet.desc}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Info warning footer badge */}
+              <div className="p-4 px-6 bg-zinc-950 border-t border-zinc-950 text-[11px] text-zinc-400 font-mono leading-normal flex items-start gap-2">
+                <HelpCircle className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                <span>
+                  {language === 'vi' 
+                    ? pillarsDetails[activePillarNode as keyof typeof pillarsDetails].footerVi 
+                    : pillarsDetails[activePillarNode as keyof typeof pillarsDetails].footerEn}
+                </span>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

@@ -78,15 +78,15 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'setting.reset_desc': 'Hành động này sẽ xóa toàn bộ lịch sử check-in, cấu trúc tài sản và thông tin thiết lập cục bộ của tài khoản này.',
 
     // Settings API Key
-    'api.title': 'Cấu hình Trí tuệ Nhân tạo (Gemini AI Key)',
-    'api.description': 'FinCopilot sử dụng mô hình trí tuệ nhân tạo thế hệ mới Gemini 3.5 Flash để tính toán cấu trúc tài sản và rà soát báo cáo tháng của riêng bạn. Theo mặc định, ứng dụng vận hành dựa trên khóa máy chủ dùng chung (Shared Key). Nếu muốn tốc độ tối ưu hoặc bypass giới hạn lưu lượng, bạn hãy nhập API Key riêng của mình dưới đây.',
-    'api.key_label': 'Khóa API cá nhân (Gemini API Key)',
-    'api.shared_key': 'Đang sử dụng khóa máy chủ dùng chung',
+    'api.title': 'Cấu hình Trí tuệ Nhân tạo (Multi-Provider AI Key)',
+    'api.description': 'FinCopilot hỗ trợ chế độ Đa mô hình thông minh. Bạn có thể tự nhập bất kỳ khóa API nào từ: Google Gemini (mặc định), OpenAI GPT (tiền tố "sk-"), hoặc Anthropic Claude (tiền tố "sk-ant-"). Hệ thống máy chủ sẽ tự động nhận diện định dạng và gọi đúng dịch vụ AI tương ứng (Gemini 3.5 Flash, GPT-4o-mini hoặc Claude 3.5 Haiku) tiện lợi.',
+    'api.key_label': 'Khóa API cá nhân (Gemini, OpenAI hoặc Claude)',
+    'api.shared_key': 'Đang sử dụng khóa máy chủ mặc định',
     'api.private_key': 'Đang kích hoạt khóa cá nhân',
-    'api.placeholder': 'Nhập API Key của bạn (ví dụ: AIzaSy...)',
+    'api.placeholder': 'Nhập API Key của bạn (ví dụ: AIzaSy... hoặc sk-... hay sk-ant-...)',
     'api.save': 'Lưu khóa',
     'api.saved_status': 'Đã lưu!',
-    'api.disclaimer': '* Khóa API được mã hóa và lưu trữ an toàn trong vùng nhớ cục bộ trình duyệt (localStorage), không bao giờ lưu trữ công khai hay lưu truyền bừa bãi.',
+    'api.disclaimer': '* Khóa API được mã hóa và lưu trữ an toàn trong vùng nhớ cục bộ trình duyệt (localStorage), không bao giờ lưu truyền bừa bãi.',
 
     // Common Phrases
     'btn.save': 'Lưu thay đổi',
@@ -159,12 +159,12 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'setting.reset_desc': 'This action permanently removes all historic check-ins, custom allocation models, and configurations for this account.',
 
     // Settings API Key
-    'api.title': 'AI Engine Configuration (Gemini API Key)',
-    'api.description': 'FinCopilot harnesses the next-generation Gemini 3.5 Flash artificial intelligence model to calculate optimized asset models and audit monthly review logs. By default, it operates on a shared cluster key. If you seek maximum speeds or want to bypass request quotas, add your private Gemini API Key below.',
-    'api.key_label': 'Private Gemini API Key',
-    'api.shared_key': 'Active shared cluster key',
-    'api.private_key': 'Active private key',
-    'api.placeholder': 'Enter your API key (e.g. AIzaSy...)',
+    'api.title': 'AI Engine Configuration (Multi-Provider API Key)',
+    'api.description': 'FinCopilot is equipped with a dynamic and secure auto-routing engine. You can enter any API key: Google Gemini (default), OpenAI GPT (starts with "sk-"), or Anthropic Claude (starts with "sk-ant-"). Our backend server will automatically configure and direct your analytical queries to the matching engine (Gemini 3.5 Flash, GPT-4o-mini, or Claude 3.5 Haiku) seamlessly.',
+    'api.key_label': 'Private API Key (Gemini, OpenAI, or Claude)',
+    'api.shared_key': 'Active shared default key',
+    'api.private_key': 'Active private key detected',
+    'api.placeholder': 'Enter your API key (e.g. AIzaSy... or sk-... or sk-ant-...)',
     'api.save': 'Save Key',
     'api.saved_status': 'Saved!',
     'api.disclaimer': '* The API key is securely encrypted and stored locally in browser storage (localStorage) and is never transmitted to shared index servers.',

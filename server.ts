@@ -149,29 +149,40 @@ async function startServer() {
     if (apiKeyToUse) {
       try {
         const ai = getGeminiClient(apiKeyToUse);
-        const prompt = `Hãy sử dụng dữ liệu Google Tìm kiếm thời gian thực để tra cứu chi tiết giá tài chính hôm nay:
-1. Giá bán ra của Vàng miếng SJC (VND/lượng) tại Công ty SJC. Khoảng bình thường: 85,000,000 - 95,000,000 VND.
-2. Giá bán ra của Vàng miếng DOJI (VND/lượng) tại Tập đoàn DOJI. Khoảng bình thường: 85,000,000 - 95,000,000 VND.
-3. Giá bán ra của Vàng nhẫn PNJ 24K (VND/lượng) của PNJ. Khoảng bình thường: 76,000,000 - 85,000,000 VND/lượng (tương ứng 7.6M - 8.5M/chỉ).
-4. Giá bán ra của Vàng Mi Hồng (VND/lượng) tại Công ty Vàng Mi Hồng. Khoảng bình thường: 85,000,000 - 93,000,000 VND.
-5. Tỷ giá USD/VND hiện hành. Khoảng bình thường: 25,200 - 25,600.
-6. Giá vàng thế giới liên tục trên sàn Yahoo Finance mã sản phẩm GC=F (USD/troy ounce). Khoảng bình thường: 2200 - 2750 USD.
-7. Giá đóng cửa khớp lệnh mới nhất của các Chứng chỉ quỹ sau dựa trên bảng giá FireAnt, SSI, hoặc TCBS:
-  - E1VFVN30 (VN30 ETF - khoảng 22,000 - 25,000 VND)
-  - FUEVFVND (Diamond ETF - khoảng 29,000 - 33,000 VND)
-  - FUESSVFL (FinLeads ETF - khoảng 21,000 - 24,000 VND)
+        const prompt = `Hãy sử dụng dữ liệu Google Tìm kiếm thời gian thực để tra cứu chi tiết giá tài chính hôm nay tại Việt Nam. Vui lòng lấy số thực tế mới nhất, không dùng các khoảng ví dụ cũ trong câu hỏi làm giới hạn:
+1. Giá bán ra của Vàng miếng SJC (VND/lượng) tại Công ty SJC.
+2. Giá bán ra của Vàng miếng DOJI (VND/lượng) tại Tập đoàn DOJI.
+3. Giá bán ra của Vàng nhẫn PNJ 24K (VND/chỉ hoặc quy đổi ra VND/lượng) của PNJ.
+4. Giá bán ra của Vàng Mi Hồng (VND/lượng) tại Công ty Vàng Mi Hồng.
+5. Tỷ giá USD/VND bán ra hiện hành tại Vietcombank.
+6. Giá vàng thế giới liên tục trên sàn Yahoo Finance mã sản phẩm GC=F (USD/troy ounce).
+7. Giá đóng cửa khớp lệnh mới nhất của các Chứng chỉ quỹ sau dựa trên bảng giá sàn HOSE trên bảng điện SSI, TCBS hoặc FireAnt (LƯU Ý: giá hiển thị trên sàn thường chia cho 1,000, ví dụ: 23.45 tức là 23,450 VND/ccq, và nếu 35.39 tức là 35,390 VND/ccq. Bạn phải nhân 1,000 để điền số VND chính xác vào JSON):
+  - E1VFVN30 (VN30 ETF)
+  - FUEVFVND (Diamond ETF)
+  - FUESSVFL (FinLeads ETF)
+
+Đồng thời tra cứu % thay đổi trong phiên hôm nay (ví dụ: +0.25 hoặc -1.1) của từng loại tài sản trên.
 
 Trả về kết quả dưới dạng JSON thuần túy có cấu trúc chính xác sau, không có phản hồi bằng lời, không kèm markdown codeblocks:
 {
   "GOLD_SJC": <số, ví dụ: 90500000>,
+  "GOLD_SJC_change": <số đại diện cho %, ví dụ: 0.15>,
   "GOLD_DOJI": <số, ví dụ: 90300000>,
-  "GOLD_PNJ": <số, giá lượng ví dụ: 78900000>,
+  "GOLD_DOJI_change": <số, ví dụ: -0.1>,
+  "GOLD_PNJ": <số giá lượng, ví dụ: 78900000>,
+  "GOLD_PNJ_change": <số, ví dụ: 0.25>,
   "GOLD_MI_HONG": <số, ví dụ: 89800000>,
+  "GOLD_MI_HONG_change": <số, ví dụ: 0.0>,
   "GOLD_WORLD_USD": <số, ví dụ: 2350.5>,
+  "GOLD_WORLD_USD_change": <số, ví dụ: 1.22>,
   "USD_VND_RATE": <số, ví dụ: 25420>,
-  "E1VFVN30": <số, ví dụ: 23450>,
-  "FUEVFVND": <số, ví dụ: 31200>,
-  "FUESSVFL": <số, ví dụ: 22900>
+  "USD_VND_RATE_change": <số, ví dụ: 0.05>,
+  "E1VFVN30": <số, ví dụ: 35390>,
+  "E1VFVN30_change": <số, ví dụ: -0.32>,
+  "FUEVFVND": <số, ví dụ: 35390>,
+  "FUEVFVND_change": <số, ví dụ: 0.55>,
+  "FUESSVFL": <số, ví dụ: 22900>,
+  "FUESSVFL_change": <số, ví dụ: -0.12>
 }`;
 
         const response = await ai.models.generateContent({
@@ -217,18 +228,33 @@ Trả về kết quả dưới dạng JSON thuần túy có cấu trúc chính x
     }
 
     Object.entries(etfMap).forEach(([symbol, item]) => {
-      const wave = getWave(item.freq);
+      let wave = getWave(item.freq);
       let calculatedPrice = item.basePrice;
+      let change_percent = Number(((wave + (fetchedData ? etfOffsetPercent : 0)) * 100).toFixed(2));
       
-      if (fetchedData && !['E1VFVN30', 'FUEVFVND', 'FUESSVFL'].includes(symbol)) {
-        calculatedPrice = Math.round(item.basePrice * (1 + etfOffsetPercent));
+      if (fetchedData) {
+        if (symbol === 'E1VFVN30') {
+          calculatedPrice = Math.round(Number(fetchedData.E1VFVN30));
+          change_percent = Number(fetchedData.E1VFVN30_change || 0);
+          wave = 0; // Freeze waves for real-time accurate data
+        } else if (symbol === 'FUEVFVND') {
+          calculatedPrice = Math.round(Number(fetchedData.FUEVFVND));
+          change_percent = Number(fetchedData.FUEVFVND_change || 0);
+          wave = 0; // Freeze waves for real-time accurate data
+        } else if (symbol === 'FUESSVFL') {
+          calculatedPrice = Math.round(Number(fetchedData.FUESSVFL));
+          change_percent = Number(fetchedData.FUESSVFL_change || 0);
+          wave = 0; // Freeze waves for real-time accurate data
+        } else {
+          calculatedPrice = Math.round(item.basePrice * (1 + etfOffsetPercent));
+        }
       }
 
       data[symbol] = {
         symbol,
         name: item.name,
         price_vnd: Math.round(calculatedPrice * (1 + wave)),
-        change_percent: Number(((wave + (fetchedData ? etfOffsetPercent : 0)) * 100).toFixed(2)),
+        change_percent,
         updated_at: new Date().toISOString(),
         data_source: dataSource,
         provider: ['FUESSVFL', 'FUESSV30', 'FUESSV50'].includes(symbol) ? 'SSI' : symbol === 'FUETCMID' ? 'TCBS' : 'FireAnt'
@@ -261,7 +287,7 @@ Trả về kết quả dưới dạng JSON thuần túy có cấu trúc chính x
       goldMap.GOLD_PNJ.basePrice = Math.round(goldPnjBasePerLuong / 10);
       goldMap.GOLD_WORLD_USD.basePrice = goldWorldUsd;
 
-      const rawRing = Math.round(Number(fetchedData.GOLD_RING || 7850000));
+      const rawRing = Math.round(Number(fetchedData.GOLD_RING || fetchedData.GOLD_TA_9999 || 7850000));
       if (rawRing < 15000000) {
         goldRingBasePerLuong = rawRing * 10;
       } else {
@@ -274,8 +300,9 @@ Trả về kết quả dưới dạng JSON thuần túy có cấu trúc chính x
     }
 
     Object.entries(goldMap).forEach(([symbol, item]) => {
-      const wave = getWave(item.freq);
+      let wave = getWave(item.freq);
       let calculatedPrice = item.basePrice;
+      let change_percent = Number(((wave + (fetchedData ? goldOffsetPercent : 0)) * 100).toFixed(2));
 
       let provider = 'SJC';
       if (symbol.includes('DOJI')) provider = 'DOJI';
@@ -286,18 +313,32 @@ Trả về kết quả dưới dạng JSON thuần túy có cấu trúc chính x
       if (fetchedData) {
         if (symbol === 'GOLD_SJC') {
           calculatedPrice = goldSjcBasePerLuong;
+          change_percent = Number(fetchedData.GOLD_SJC_change || (goldOffsetPercent * 100).toFixed(2));
+          wave = 0; // Freeze waves for real-time accurate data
         } else if (symbol === 'GOLD_DOJI') {
           calculatedPrice = goldDojiBasePerLuong;
+          change_percent = Number(fetchedData.GOLD_DOJI_change || 0);
+          wave = 0; // Freeze waves for real-time accurate data
         } else if (symbol === 'GOLD_MI_HONG') {
           calculatedPrice = goldMiHongBasePerLuong;
+          change_percent = Number(fetchedData.GOLD_MI_HONG_change || 0);
+          wave = 0; // Freeze waves for real-time accurate data
         } else if (symbol === 'GOLD_WORLD_USD') {
           calculatedPrice = goldWorldUsd;
+          change_percent = Number(fetchedData.GOLD_WORLD_USD_change || 0);
+          wave = 0; // Freeze waves for real-time accurate data
         } else if (symbol === 'GOLD_RING' || symbol === 'GOLD_TA_9999') {
           calculatedPrice = Math.round(goldRingBasePerLuong / 10);
+          change_percent = Number(fetchedData.GOLD_RING_change || fetchedData.GOLD_TA_9999_change || (goldOffsetPercent * 100).toFixed(2));
+          wave = 0; // Freeze waves for real-time accurate data
         } else if (symbol === 'GOLD_PNJ') {
           calculatedPrice = Math.round(goldPnjBasePerLuong / 10);
+          change_percent = Number(fetchedData.GOLD_PNJ_change || 0);
+          wave = 0; // Freeze waves for real-time accurate data
         } else if (symbol === 'GOLD_24K') {
           calculatedPrice = Math.round((goldRingBasePerLuong * 0.994) / 10);
+          change_percent = Number(fetchedData.GOLD_PNJ_change || (goldOffsetPercent * 100).toFixed(2));
+          wave = 0; // Freeze waves for real-time accurate data
         } else {
           calculatedPrice = Math.round(item.basePrice * (1 + goldOffsetPercent));
         }
@@ -307,7 +348,7 @@ Trả về kết quả dưới dạng JSON thuần túy có cấu trúc chính x
         symbol,
         name: item.name,
         price_vnd: symbol === 'GOLD_WORLD_USD' ? calculatedPrice : Math.round(calculatedPrice * (1 + wave)),
-        change_percent: Number(((wave + (fetchedData ? goldOffsetPercent : 0)) * 100).toFixed(2)),
+        change_percent,
         updated_at: new Date().toISOString(),
         data_source: dataSource,
         provider
@@ -322,7 +363,7 @@ Trả về kết quả dưới dạng JSON thuần túy có cấu trúc chính x
       symbol: 'USD_VND',
       name: 'Tỷ giá USD/VND',
       price_vnd: usdVndRate,
-      change_percent: 0.12,
+      change_percent: fetchedData ? Number(fetchedData.USD_VND_RATE_change || 0) : 0.12,
       updated_at: new Date().toISOString(),
       data_source: dataSource,
       provider: 'Vietcombank / SBV'

@@ -2,36 +2,49 @@
 @import "tailwindcss";
 
 :root {
-  --color-zinc-950: #09090b;
-  --color-zinc-900: #131316;
-  --color-zinc-850: #1c1c21;
-  --color-zinc-800: #27272a;
-  --color-zinc-700: #3f3f46;
-  --color-zinc-600: #52525b;
-  --color-zinc-500: #71717a;
-  --color-zinc-400: #a1a1aa;
-  --color-zinc-300: #d4d4d8;
-  --color-zinc-250: #e4e4e7;
-  --color-zinc-200: #ececf1;
-  --color-zinc-100: #fafafa;
+  --zinc-950: #09090b;
+  --zinc-900: #131316;
+  --zinc-850: #1c1c21;
+  --zinc-800: #27272a;
+  --zinc-700: #3f3f46;
+  --zinc-600: #52525b;
+  --zinc-500: #71717a;
+  --zinc-400: #a1a1aa;
+  --zinc-300: #d4d4d8;
+  --zinc-250: #e4e4e7;
+  --zinc-200: #ececf1;
+  --zinc-100: #fafafa;
 }
 
 .light {
-  --color-zinc-950: #ffffff;
-  --color-zinc-900: #f4f4f7;
-  --color-zinc-850: #e4e4eb;
-  --color-zinc-800: #d4d4de;
-  --color-zinc-700: #a1a1b2;
-  --color-zinc-600: #717180;
-  --color-zinc-500: #52525b;
-  --color-zinc-400: #27272a;
-  --color-zinc-300: #18181b;
-  --color-zinc-250: #0f0f11;
-  --color-zinc-200: #0a0a0c;
-  --color-zinc-100: #000000;
+  --zinc-950: #ffffff;
+  --zinc-900: #f4f4f7;
+  --zinc-850: #e4e4eb;
+  --zinc-800: #d4d4de;
+  --zinc-700: #a1a1b2;
+  --zinc-600: #717180;
+  --zinc-500: #52525b;
+  --zinc-400: #27272a;
+  --zinc-300: #18181b;
+  --zinc-250: #0f0f11;
+  --zinc-200: #0a0a0c;
+  --zinc-100: #000000;
 }
 
 @theme {
+  --color-zinc-950: var(--zinc-950);
+  --color-zinc-900: var(--zinc-900);
+  --color-zinc-850: var(--zinc-850);
+  --color-zinc-800: var(--zinc-800);
+  --color-zinc-700: var(--zinc-700);
+  --color-zinc-600: var(--zinc-600);
+  --color-zinc-500: var(--zinc-500);
+  --color-zinc-400: var(--zinc-400);
+  --color-zinc-300: var(--zinc-300);
+  --color-zinc-250: var(--zinc-250);
+  --color-zinc-200: var(--zinc-200);
+  --color-zinc-100: var(--zinc-100);
+
   --animate-fade-in: fade-in 0.3s ease-out;
   --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }

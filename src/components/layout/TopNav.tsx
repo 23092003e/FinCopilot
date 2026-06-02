@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Menu, X, Flame, ShieldAlert, CheckCircle, LogOut, Sun, Moon, Globe, Download } from 'lucide-react';
 import { Profile } from '../../types';
 import { formatVND } from '../../lib/utils/vnd';
@@ -14,12 +14,80 @@ interface TopNavProps {
   profile: Profile;
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  assetHoldings?: any[];
 }
 
-export function TopNav({ profile, activeTab, setActiveTab }: TopNavProps) {
+export function TopNav({ profile, activeTab, setActiveTab, assetHoldings = [] }: TopNavProps) {
   const { logout } = useAuth();
   const { theme, language, toggleTheme, setLanguage, t, isInstallable, installPWA } = useUI();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [marketPrices, setMarketPrices] = useState<any>(null);
+
+  // Poll for latest market rates in TopNav to align savings valuation
+  useEffect(() => {
+    let active = true;
+    const fetchPrices = async () => {
+      try {
+        const res = await fetch('/api/market-prices');
+        if (res.ok && active) {
+          const data = await res.json();
+          setMarketPrices(data);
+        }
+      } catch (err) {
+        console.warn('Error fetching live rates in top nav:', err);
+      }
+    };
+    fetchPrices();
+    const interval = setInterval(fetchPrices, 20000); // 20s poller for TopNav is fine
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Compute portfolio's current total asset valuation in TopNav
+  const portfolioValue = useMemo(() => {
+    let total = 0;
+    const defaultBases: Record<string, number> = {
+      E1VFVN30: 23450,
+      FUEVFVND: 31200,
+      FUEMAV30: 15800,
+      FUEKIV30: 12400,
+      FUEVN100: 17100,
+      FUESSV30: 16200,
+      FUESSVFL: 22900,
+      FUESSV50: 18700,
+      FUETFID: 14500,
+      FUETCMID: 13650,
+      GOLD_TA_9999: 8200000,
+      GOLD_24K: 8150000,
+      GOLD_WHITE_10K: 3450000,
+      GOLD_WHITE_14K: 4850000,
+      GOLD_WHITE_18K: 6250000,
+      GOLD_ROSE_10K: 3400000,
+      GOLD_ROSE_14K: 4800000,
+      GOLD_ROSE_18K: 6200000,
+      GOLD_WEST_8K: 2700000,
+      GOLD_WEST_9K: 3050000,
+      GOLD_WEST_10K: 3350000,
+      GOLD_WEST_14K: 4750000,
+      GOLD_WEST_18K: 6150000,
+      GOLD_ITALY_750: 5550000,
+      GOLD_ITALY_925: 180000,
+      GOLD_NON: 2500000,
+      GOLD_MY_KY: 50000,
+      GOLD_SJC: 90500000,
+      GOLD_RING: 7850000
+    };
+
+    assetHoldings.forEach((h: any) => {
+      const livePrice = (marketPrices && marketPrices[h.symbol])
+        ? marketPrices[h.symbol].price_vnd
+        : (defaultBases[h.symbol] || h.price_vnd || 0);
+      total += h.quantity * livePrice;
+    });
+    return total;
+  }, [assetHoldings, marketPrices]);
 
   const menuItems = [
     { id: 'dashboard', langKey: 'nav.dashboard' },
@@ -53,7 +121,7 @@ export function TopNav({ profile, activeTab, setActiveTab }: TopNavProps) {
         <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/30">
           <Flame className="w-4 h-4 text-emerald-400" />
         </div>
-        <span className="text-zinc-150 font-extrabold text-sm font-sans">
+        <span className="text-zinc-100 font-extrabold text-sm font-sans">
           FinCopilot
         </span>
       </div>
@@ -63,7 +131,7 @@ export function TopNav({ profile, activeTab, setActiveTab }: TopNavProps) {
         <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-850 py-1.5 px-3 rounded-full text-xs transition-colors duration-200">
           <span className="text-zinc-400 font-medium">{t('stat.actual_savings')}</span>
           <span className="text-emerald-400 font-extrabold">
-            {formatVND(profile.total_savings_vnd, true)}
+            {formatVND(profile.total_savings_vnd + portfolioValue, true)}
           </span>
         </div>
         <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-850 py-1.5 px-3 rounded-full text-xs transition-colors duration-200">
@@ -129,7 +197,7 @@ export function TopNav({ profile, activeTab, setActiveTab }: TopNavProps) {
         {/* Mobile menu button */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-1.5 bg-zinc-900 border border-zinc-850 rounded-lg text-zinc-400 hover:text-zinc-150 md:hidden focus:outline-none cursor-pointer"
+          className="p-1.5 bg-zinc-900 border border-zinc-850 rounded-lg text-zinc-400 hover:text-zinc-100 md:hidden focus:outline-none cursor-pointer"
         >
           {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
         </button>
@@ -141,7 +209,7 @@ export function TopNav({ profile, activeTab, setActiveTab }: TopNavProps) {
           <div className="grid grid-cols-2 gap-2 text-xs border-b border-zinc-900 pb-3 mb-2 flex items-center">
             <div>
               <span className="text-[10px] text-zinc-400">{t('stat.actual_savings')}</span>
-              <p className="text-emerald-400 font-bold">{formatVND(profile.total_savings_vnd, true)}</p>
+              <p className="text-emerald-400 font-bold">{formatVND(profile.total_savings_vnd + portfolioValue, true)}</p>
             </div>
             <div>
               <span className="text-[10px] text-zinc-400">User</span>
@@ -172,7 +240,7 @@ export function TopNav({ profile, activeTab, setActiveTab }: TopNavProps) {
               className={`w-full text-left py-2 px-3 rounded-md text-xs font-semibold transition-all ${
                 activeTab === item.id
                   ? 'bg-zinc-900 text-emerald-400 font-bold'
-                  : 'text-zinc-400 hover:text-zinc-150 hover:bg-zinc-900/40'
+                  : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/40'
               }`}
             >
               {t(item.langKey)}

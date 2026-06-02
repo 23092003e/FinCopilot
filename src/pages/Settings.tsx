@@ -51,6 +51,27 @@ export function Settings({ profile, updateProfile, resetAllData }: SettingsProps
     setApiKey(customApiKey);
   }, [customApiKey]);
 
+  // Keep form fields in sync with database-level changes or demo profile resets
+  useEffect(() => {
+    if (profile) {
+      setName(profile.full_name || '');
+      setCareer(profile.career_field || 'software');
+      setRisk(profile.risk_tolerance || 'moderate');
+      setKnowledge(profile.investment_knowledge || 'intermediate');
+      setSavings(profile.total_savings_vnd || 50000000);
+      setIncome(profile.monthly_income_vnd || 25000000);
+      setExpenses(profile.monthly_expenses_vnd || 12000000);
+    }
+  }, [
+    profile.full_name,
+    profile.career_field,
+    profile.risk_tolerance,
+    profile.investment_knowledge,
+    profile.total_savings_vnd,
+    profile.monthly_income_vnd,
+    profile.monthly_expenses_vnd
+  ]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSavingStatus(true);

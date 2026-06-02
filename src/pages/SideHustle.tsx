@@ -257,7 +257,7 @@ export function SideHustle({ profile, sideHustles, updateSideHustles }: SideHust
                                 {idea.difficulty === 'high' ? 'Khó' : idea.difficulty === 'medium' ? 'Vừa' : 'Dễ'}
                               </span>
                             </div>
-                            <h4 className="text-zinc-150 text-zinc-100 font-bold text-sm tracking-tight leading-snug">
+                            <h4 className="text-zinc-100 font-bold text-sm tracking-tight leading-snug">
                               {idea.title}
                             </h4>
                             <p className="text-zinc-400 text-xs leading-relaxed font-sans mt-1">

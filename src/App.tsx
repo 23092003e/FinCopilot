@@ -112,7 +112,7 @@ export default function App() {
           />
         );
       case 'simulator':
-        return <Simulator />;
+        return <Simulator profile={profile} />;
       case 'scenarios':
         return <Scenarios profile={profile} />;
       case 'side-hustle':
@@ -140,6 +140,7 @@ export default function App() {
             addCheckin={addCheckin}
             setActiveTab={setActiveTab}
             transactions={transactions}
+            assetHoldings={assetHoldings}
           />
         );
     }
@@ -169,6 +170,7 @@ export default function App() {
             profile={profile}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
+            assetHoldings={assetHoldings}
           />
         )}
 

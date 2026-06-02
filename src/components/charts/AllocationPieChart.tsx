@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { AllocationResponse } from '../../types';
 import { formatVND } from '../../lib/utils/vnd';
+import { useUI } from '../../contexts/UIContext';
 
 interface AllocationPieChartProps {
   data: AllocationResponse;
@@ -41,6 +42,8 @@ const CATEGORY_MAP: Record<string, { label: string; color: string; description: 
 };
 
 export function AllocationPieChart({ data }: AllocationPieChartProps) {
+  const { theme } = useUI();
+  const isDark = theme === 'dark';
   const { allocation } = data;
   const [selectedKey, setSelectedKey] = useState<string>('etf_dca');
   const [mounted, setMounted] = useState(false);
@@ -113,10 +116,10 @@ export function AllocationPieChart({ data }: AllocationPieChartProps) {
                   name,
                 ]}
                 contentStyle={{
-                  backgroundColor: '#09090b',
-                  borderColor: '#27272a',
+                  backgroundColor: isDark ? '#09090b' : '#ffffff',
+                  borderColor: isDark ? '#27272a' : '#d4d4de',
                   borderRadius: '6px',
-                  color: '#f4f4f5',
+                  color: isDark ? '#f4f4f5' : '#18181b',
                 }}
               />
             </PieChart>

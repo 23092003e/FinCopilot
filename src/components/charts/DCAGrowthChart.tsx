@@ -17,12 +17,15 @@ import {
 } from 'recharts';
 import { DCAPoint } from '../../lib/utils/finance';
 import { formatVND } from '../../lib/utils/vnd';
+import { useUI } from '../../contexts/UIContext';
 
 interface DCAGrowthChartProps {
   data: DCAPoint[];
 }
 
 export function DCAGrowthChart({ data }: DCAGrowthChartProps) {
+  const { theme } = useUI();
+  const isDark = theme === 'dark';
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -82,11 +85,11 @@ export function DCAGrowthChart({ data }: DCAGrowthChartProps) {
               </linearGradient>
             </defs>
 
-            <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#27272a' : '#e4e4eb'} vertical={false} />
             
             <XAxis
               dataKey="year"
-              stroke="#52525b"
+              stroke={isDark ? '#52525b' : '#717180'}
               fontSize={11}
               tickLine={false}
               axisLine={false}
@@ -94,7 +97,7 @@ export function DCAGrowthChart({ data }: DCAGrowthChartProps) {
             />
             
             <YAxis
-              stroke="#52525b"
+              stroke={isDark ? '#52525b' : '#717180'}
               fontSize={10}
               tickLine={false}
               axisLine={false}
@@ -106,10 +109,10 @@ export function DCAGrowthChart({ data }: DCAGrowthChartProps) {
               formatter={(value: any) => [formatVND(Number(value)), '']}
               labelFormatter={(label) => `Năm thứ ${label}`}
               contentStyle={{
-                backgroundColor: '#09090b',
-                borderColor: '#27272a',
+                backgroundColor: isDark ? '#09090b' : '#ffffff',
+                borderColor: isDark ? '#27272a' : '#d4d4de',
                 borderRadius: '8px',
-                color: '#f4f4f5',
+                color: isDark ? '#f4f4f5' : '#18181b',
                 fontSize: '12px',
               }}
             />
@@ -164,7 +167,7 @@ export function DCAGrowthChart({ data }: DCAGrowthChartProps) {
               name="Tổng số vốn góp gốc"
               type="monotone"
               dataKey="contributed"
-              stroke="#e4e4e7"
+              stroke={isDark ? '#e4e4e7' : '#52525b'}
               strokeWidth={1.5}
               fillOpacity={1}
               fill="url(#colorContributed)"

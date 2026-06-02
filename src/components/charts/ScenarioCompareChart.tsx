@@ -15,6 +15,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { formatVND } from '../../lib/utils/vnd';
+import { useUI } from '../../contexts/UIContext';
 
 interface ScenarioCompareChartProps {
   monthlyContribution: number;
@@ -31,6 +32,8 @@ export function ScenarioCompareChart({
   bankReturn = 4,
   mixedReturn = 9,
 }: ScenarioCompareChartProps) {
+  const { theme } = useUI();
+  const isDark = theme === 'dark';
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -88,16 +91,16 @@ export function ScenarioCompareChart({
               margin={{ top: 20, right: 10, left: 0, bottom: 0 }}
               barSize={16}
             >
-            <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#27272a' : '#e4e4eb'} vertical={false} />
             <XAxis
               dataKey="milestone"
-              stroke="#52525b"
+              stroke={isDark ? '#52525b' : '#717180'}
               fontSize={11}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              stroke="#52525b"
+              stroke={isDark ? '#52525b' : '#717180'}
               fontSize={10}
               tickLine={false}
               axisLine={false}
@@ -107,10 +110,10 @@ export function ScenarioCompareChart({
             <Tooltip
               formatter={(value: any) => [formatVND(Number(value)), '']}
               contentStyle={{
-                backgroundColor: '#09090b',
-                borderColor: '#27272a',
+                backgroundColor: isDark ? '#09090b' : '#ffffff',
+                borderColor: isDark ? '#27272a' : '#d4d4de',
                 borderRadius: '8px',
-                color: '#f4f4f5',
+                color: isDark ? '#f4f4f5' : '#18181b',
                 fontSize: '12px',
               }}
             />
@@ -119,7 +122,7 @@ export function ScenarioCompareChart({
               height={36}
               iconType="circle"
               iconSize={8}
-              wrapperStyle={{ fontSize: '11px', color: '#a1a1aa' }}
+              wrapperStyle={{ fontSize: '11px', color: isDark ? '#a1a1aa' : '#52525b' }}
             />
 
             {/* Bank Savings */}

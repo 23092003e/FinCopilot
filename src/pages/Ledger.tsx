@@ -130,7 +130,12 @@ export function Ledger({
   const fetchPrices = async () => {
     setMarketLoading(true);
     try {
-      const res = await fetch('/api/market-prices');
+      const apiKey = localStorage.getItem(`fincopilot_apikey_${profile?.id}`) || '';
+      const res = await fetch('/api/market-prices', {
+        headers: {
+          'x-gemini-api-key': apiKey
+        }
+      });
       if (res.ok) {
         const data = await res.json();
         setMarketPrices(data);
@@ -161,7 +166,7 @@ export function Ledger({
   // Auto preset symbols based on Asset type selected
   const handleAssetTypeChange = (type: 'ETF' | 'GOLD') => {
     setAssetType(type);
-    setAssetSymbol(type === 'ETF' ? 'E1VFVN30' : 'GOLD_RING');
+    setAssetSymbol(type === 'ETF' ? 'E1VFVN30' : 'GOLD_TA_9999');
     setAssetPrice(0);
     setAssetQty(0);
     setAssetFormError('');
@@ -180,6 +185,31 @@ export function Ledger({
       const defaultBases: Record<string, number> = {
         E1VFVN30: 23450,
         FUEVFVND: 31200,
+        FUEMAV30: 15800,
+        FUEKIV30: 12400,
+        FUEVN100: 17100,
+        FUESSV30: 16200,
+        FUESSVFL: 22900,
+        FUESSV50: 18700,
+        FUETFID: 14500,
+        FUETCMID: 13650,
+        GOLD_TA_9999: 8200000,
+        GOLD_24K: 8150000,
+        GOLD_WHITE_10K: 3450000,
+        GOLD_WHITE_14K: 4850000,
+        GOLD_WHITE_18K: 6250000,
+        GOLD_ROSE_10K: 3400000,
+        GOLD_ROSE_14K: 4800000,
+        GOLD_ROSE_18K: 6200000,
+        GOLD_WEST_8K: 2700000,
+        GOLD_WEST_9K: 3050000,
+        GOLD_WEST_10K: 3350000,
+        GOLD_WEST_14K: 4750000,
+        GOLD_WEST_18K: 6150000,
+        GOLD_ITALY_750: 5550000,
+        GOLD_ITALY_925: 180000,
+        GOLD_NON: 2500000,
+        GOLD_MY_KY: 50000,
         GOLD_SJC: 90500000,
         GOLD_RING: 7850000
       };
@@ -191,7 +221,15 @@ export function Ledger({
 
   // Compute stats on current portfolio
   const portfolioStats = useMemo(() => {
-    const listSymbols = ['E1VFVN30', 'FUEVFVND', 'GOLD_SJC', 'GOLD_RING'];
+    const listSymbols = [
+      'E1VFVN30', 'FUEVFVND', 'FUEMAV30', 'FUEKIV30', 'FUEVN100',
+      'FUESSV30', 'FUESSVFL', 'FUESSV50', 'FUETFID', 'FUETCMID',
+      'GOLD_TA_9999', 'GOLD_24K', 'GOLD_WHITE_10K', 'GOLD_WHITE_14K',
+      'GOLD_WHITE_18K', 'GOLD_ROSE_10K', 'GOLD_ROSE_14K', 'GOLD_ROSE_18K',
+      'GOLD_WEST_8K', 'GOLD_WEST_9K', 'GOLD_WEST_10K', 'GOLD_WEST_14K',
+      'GOLD_WEST_18K', 'GOLD_ITALY_750', 'GOLD_ITALY_925', 'GOLD_NON',
+      'GOLD_MY_KY', 'GOLD_SJC', 'GOLD_RING'
+    ];
     const summary: Record<string, {
       symbol: string;
       name: string;
@@ -208,6 +246,31 @@ export function Ledger({
     const names: Record<string, string> = {
       E1VFVN30: 'Quỹ ETF VN30 (VFM)',
       FUEVFVND: 'Quỹ ETF DCVFMVN DIAMOND',
+      FUEMAV30: 'Quỹ ETF MAFM VN30',
+      FUEKIV30: 'Quỹ ETF KIM Growth VN30',
+      FUEVN100: 'Quỹ ETF VinaCapital VN100',
+      FUESSV30: 'Quỹ ETF SSIAM VN30',
+      FUESSVFL: 'Quỹ ETF SSIAM VNFIN LEAD',
+      FUESSV50: 'Quỹ ETF SSIAM VN50',
+      FUETFID: 'Quỹ ETF IPAAM VN100',
+      FUETCMID: 'Quỹ ETF Techcom VN30',
+      GOLD_TA_9999: 'Vàng ta / Vàng nhẫn 9999',
+      GOLD_24K: 'Vàng ta 999 / Vàng 24K',
+      GOLD_WHITE_10K: 'Vàng trắng 10K',
+      GOLD_WHITE_14K: 'Vàng trắng 14K',
+      GOLD_WHITE_18K: 'Vàng trắng 18K',
+      GOLD_ROSE_10K: 'Vàng hồng 10K',
+      GOLD_ROSE_14K: 'Vàng hồng 14K',
+      GOLD_ROSE_18K: 'Vàng hồng 18K',
+      GOLD_WEST_8K: 'Vàng Tây 8K',
+      GOLD_WEST_9K: 'Vàng Tây 9K',
+      GOLD_WEST_10K: 'Vàng Tây 10K',
+      GOLD_WEST_14K: 'Vàng Tây 14K',
+      GOLD_WEST_18K: 'Vàng Tây 18K',
+      GOLD_ITALY_750: 'Vàng Ý 750',
+      GOLD_ITALY_925: 'Vàng bạc Ý 925',
+      GOLD_NON: 'Vàng non',
+      GOLD_MY_KY: 'Vàng mỹ ký',
       GOLD_SJC: 'Vàng miếng SJC',
       GOLD_RING: 'Vàng nhẫn 24K 9999'
     };
@@ -215,6 +278,31 @@ export function Ledger({
     const types: Record<string, 'ETF' | 'GOLD'> = {
       E1VFVN30: 'ETF',
       FUEVFVND: 'ETF',
+      FUEMAV30: 'ETF',
+      FUEKIV30: 'ETF',
+      FUEVN100: 'ETF',
+      FUESSV30: 'ETF',
+      FUESSVFL: 'ETF',
+      FUESSV50: 'ETF',
+      FUETFID: 'ETF',
+      FUETCMID: 'ETF',
+      GOLD_TA_9999: 'GOLD',
+      GOLD_24K: 'GOLD',
+      GOLD_WHITE_10K: 'GOLD',
+      GOLD_WHITE_14K: 'GOLD',
+      GOLD_WHITE_18K: 'GOLD',
+      GOLD_ROSE_10K: 'GOLD',
+      GOLD_ROSE_14K: 'GOLD',
+      GOLD_ROSE_18K: 'GOLD',
+      GOLD_WEST_8K: 'GOLD',
+      GOLD_WEST_9K: 'GOLD',
+      GOLD_WEST_10K: 'GOLD',
+      GOLD_WEST_14K: 'GOLD',
+      GOLD_WEST_18K: 'GOLD',
+      GOLD_ITALY_750: 'GOLD',
+      GOLD_ITALY_925: 'GOLD',
+      GOLD_NON: 'GOLD',
+      GOLD_MY_KY: 'GOLD',
       GOLD_SJC: 'GOLD',
       GOLD_RING: 'GOLD'
     };
@@ -239,7 +327,7 @@ export function Ledger({
       if (!summary[sym]) {
         summary[sym] = {
           symbol: sym,
-          name: sym,
+          name: names[sym] || sym,
           asset_type: log.asset_type,
           total_quantity: 0,
           total_invested: 0,
@@ -270,6 +358,31 @@ export function Ledger({
         const fallbacks: Record<string, number> = {
           E1VFVN30: 23450,
           FUEVFVND: 31200,
+          FUEMAV30: 15800,
+          FUEKIV30: 12400,
+          FUEVN100: 17100,
+          FUESSV30: 16200,
+          FUESSVFL: 22900,
+          FUESSV50: 18700,
+          FUETFID: 14500,
+          FUETCMID: 13650,
+          GOLD_TA_9999: 8200000,
+          GOLD_24K: 8150000,
+          GOLD_WHITE_10K: 3450000,
+          GOLD_WHITE_14K: 4850000,
+          GOLD_WHITE_18K: 6250000,
+          GOLD_ROSE_10K: 3400000,
+          GOLD_ROSE_14K: 4800000,
+          GOLD_ROSE_18K: 6200000,
+          GOLD_WEST_8K: 2700000,
+          GOLD_WEST_9K: 3050000,
+          GOLD_WEST_10K: 3350000,
+          GOLD_WEST_14K: 4750000,
+          GOLD_WEST_18K: 6150000,
+          GOLD_ITALY_750: 5550000,
+          GOLD_ITALY_925: 180000,
+          GOLD_NON: 2500000,
+          GOLD_MY_KY: 50000,
           GOLD_SJC: 90500000,
           GOLD_RING: 7850000
         };
@@ -1297,15 +1410,28 @@ Target structure:
               </div>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               {[
                 { key: 'E1VFVN30', tag: 'ETF VN30', suffix: '/ck' },
                 { key: 'FUEVFVND', tag: 'ETF Diamond', suffix: '/ck' },
-                { key: 'GOLD_SJC', tag: 'Vàng SJC', suffix: '/lượng' },
-                { key: 'GOLD_RING', tag: 'Vàng 24K', suffix: '/chỉ' }
+                { key: 'FUESSVFL', tag: 'FinLeads ETF', suffix: '/ck' },
+                { key: 'GOLD_TA_9999', tag: 'Vàng Ta 9999', suffix: '/chỉ' },
+                { key: 'GOLD_WHITE_18K', tag: 'Vàng Trắng 18K', suffix: '/chỉ' },
+                { key: 'GOLD_ITALY_750', tag: 'Vàng Ý 750', suffix: '/chỉ' }
               ].map(({ key, tag, suffix }) => {
+                const getFallbackPrice = (k: string) => {
+                  const bases: Record<string, number> = {
+                    E1VFVN30: 23450,
+                    FUEVFVND: 31200,
+                    FUESSVFL: 22900,
+                    GOLD_TA_9999: 8200000,
+                    GOLD_WHITE_18K: 6250000,
+                    GOLD_ITALY_750: 5550000
+                  };
+                  return bases[k] || 100000;
+                };
                 const item = marketPrices?.[key] || {
-                  price_vnd: key === 'E1VFVN30' ? 23450 : key === 'FUEVFVND' ? 31200 : key === 'GOLD_SJC' ? 90500000 : 7850000,
+                  price_vnd: getFallbackPrice(key),
                   change_percent: 0
                 };
                 const isPositive = item.change_percent >= 0;
@@ -1313,20 +1439,126 @@ Target structure:
                   <div key={key} className="bg-zinc-950/80 rounded-xl p-3 border border-zinc-900 flex flex-col justify-between hover:border-zinc-800 transition-all duration-200 group">
                     <div className="flex justify-between items-center gap-1 mb-1">
                       <span className="text-[10px] font-mono text-zinc-500 uppercase font-black group-hover:text-emerald-400 transition-colors">{key}</span>
-                      <span className="text-[9px] px-1.5 py-0.5 bg-zinc-900 text-zinc-400 rounded border border-zinc-850 font-sans font-medium">{tag}</span>
+                      <span className="text-[8.5px] px-1 py-0.5 bg-zinc-900 text-zinc-400 rounded border border-zinc-850 font-sans font-medium">{tag}</span>
                     </div>
                     <div className="space-y-0.5">
-                      <div className="text-sm font-extrabold text-zinc-100 font-sans leading-none">
-                        {item.price_vnd.toLocaleString('vi-VN')} <span className="text-[10px] text-zinc-500 font-medium">{suffix}</span>
+                      <div className="text-[12.5px] font-extrabold text-zinc-100 font-sans leading-none">
+                        {item.price_vnd.toLocaleString('vi-VN')} <span className="text-[9px] text-zinc-500 font-medium">{suffix}</span>
                       </div>
                       <div className={`text-[10px] font-mono font-bold flex items-center justify-between ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
                         <span>{isPositive ? '▲ +' : '▼ '}{item.change_percent}%</span>
-                        <span className="text-[8px] text-zinc-700 uppercase font-medium">BENCHMARK</span>
+                        <span className="text-[8px] text-zinc-700 uppercase font-medium">LIVE</span>
                       </div>
                     </div>
                   </div>
                 );
               })}
+            </div>
+
+            {/* Added: Domestic Gold comparison & World Arbitrage gap & ETF Provider directories */}
+            <div className="bg-zinc-950/50 border border-zinc-900/80 rounded-xl p-4.5 mt-4 space-y-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-zinc-900 pb-3">
+                <div>
+                  <h4 className="text-xs font-extrabold text-zinc-200 font-sans tracking-tight">
+                    {language === 'vi' ? '📊 TIÊU ĐIỂM THỊ TRƯỜNG & CHÊNH LỆCH VÀNG' : '📊 MARKET SPOTLIGHT & GOLD SPREADS'}
+                  </h4>
+                  <p className="text-[10px] text-zinc-500 font-sans mt-0.5">
+                    {language === 'vi' ? 'Đối chiếu giá từ các nguồn đề xuất: SJC, DOJI, PNJ, Mi Hồng, Yahoo Finance (GC=F)' : 'Comparing recommended sources: SJC, DOJI, PNJ, Mi Hồng, Yahoo Finance (GC=F)'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                  <span className="text-[9px] px-2 py-0.5 rounded bg-zinc-900 border border-zinc-850 text-emerald-400 font-mono font-bold uppercase tracking-wider">
+                    {marketPrices?.['GOLD_SJC']?.data_source === 'real_time_gemini' ? 'GEMINI GROUNDED' : 'LOCAL SIMULATED'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                
+                {/* Board 1: Gold Comparison */}
+                <div className="lg:col-span-4 bg-zinc-900/20 rounded-xl p-3 border border-zinc-900/60 space-y-3">
+                  <div className="flex justify-between items-center border-b border-zinc-900/80 pb-1.5">
+                    <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wide">🟡 {language === 'vi' ? 'Vàng Trong Nước' : 'Domestic Gold'}</span>
+                    <span className="text-[9px] text-zinc-600 font-mono">VND / Lượng</span>
+                  </div>
+                  <div className="space-y-2">
+                    {[
+                      { name: 'SJC (Nhà nước)', price: marketPrices?.['GOLD_SJC']?.price_vnd || 90500000, color: 'text-zinc-100' },
+                      { name: 'DOJI (Tập đoàn)', price: marketPrices?.['GOLD_DOJI']?.price_vnd || 90300000, color: 'text-zinc-100' },
+                      { name: 'Mi Hồng (Sài Gòn)', price: marketPrices?.['GOLD_MI_HONG']?.price_vnd || 89800000, color: 'text-zinc-100' },
+                      { name: 'PNJ (Vàng nhẫn 24K)', price: (marketPrices?.['GOLD_PNJ']?.price_vnd || 7890000) * 10, color: 'text-amber-400', isRing: true }
+                    ].map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-xs font-mono">
+                        <span className="text-zinc-500 font-medium">{item.name}</span>
+                        <div className="text-right">
+                          <span className={`font-extrabold ${item.color}`}>
+                            {item.price.toLocaleString('vi-VN')}
+                          </span>
+                          {item.isRing && <span className="text-[8px] text-zinc-600 block leading-none">{language === 'vi' ? 'Nhẫn Trơn' : 'Ring'}</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Board 2: World Gold & Gap Metrics */}
+                <div className="lg:col-span-5 bg-zinc-900/20 rounded-xl p-3 border border-zinc-900/60 space-y-3">
+                  <div className="flex justify-between items-center border-b border-zinc-900/80 pb-1.5">
+                    <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wide">🌍 {language === 'vi' ? 'Vàng Thế Giới vs SJC' : 'World Gold vs SJC'}</span>
+                    <span className="text-[9px] text-zinc-600 font-bold font-mono">YAHOO FINANCE</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-center my-1">
+                    <div className="bg-zinc-950/80 border border-zinc-900 rounded-lg p-1.5">
+                      <span className="text-[8px] text-zinc-500 font-mono block mb-0.5">{language === 'vi' ? 'VÀNG QUỐC TẾ' : 'WORLD SPOT'}</span>
+                      <span className="text-xs font-black text-amber-400 font-mono">${(marketPrices?.['GOLD_GAP_INFO']?.world_gold_usd_per_oz || 2350).toLocaleString('en-US')}</span>
+                      <span className="text-[7.5px] text-zinc-650 font-mono block">/ troy oz</span>
+                    </div>
+                    <div className="bg-zinc-950/80 border border-zinc-900 rounded-lg p-1.5">
+                      <span className="text-[8px] text-zinc-500 font-mono block mb-0.5">{language === 'vi' ? 'TỶ GIÁ USD/VND' : 'EXCHANGE RATE'}</span>
+                      <span className="text-xs font-black text-zinc-300 font-mono">{(marketPrices?.['GOLD_GAP_INFO']?.usd_vnd_rate || 25420).toLocaleString('vi-VN')}</span>
+                      <span className="text-[7.5px] text-zinc-650 font-mono block">Vietcombank</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 bg-amber-500/[0.01] border border-amber-500/10 p-2 rounded-lg">
+                    <div className="flex justify-between text-[11px] font-mono leading-none">
+                      <span className="text-zinc-500">{language === 'vi' ? 'Thế giới quy đổi:' : 'World Gold converted:'}</span>
+                      <span className="text-zinc-400 font-bold">~{(marketPrices?.['GOLD_GAP_INFO']?.world_gold_vnd_per_luong || 72000000).toLocaleString('vi-VN')} đ/lượng</span>
+                    </div>
+                    <div className="flex justify-between text-[11px] font-mono leading-none pt-1 border-t border-zinc-900">
+                      <span className="text-amber-500 font-bold">{language === 'vi' ? 'Chênh lệch (Gap):' : 'Spread Difference:'}</span>
+                      <span className="text-amber-400 font-black">
+                        +{((marketPrices?.['GOLD_GAP_INFO']?.gap_vnd_per_luong || 18500000) / 1000000).toFixed(1)}M đ/lượng
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Board 3: ETF Provider Tracking */}
+                <div className="lg:col-span-3 bg-zinc-900/20 rounded-xl p-3 border border-zinc-900/60 space-y-3">
+                  <div className="flex justify-between items-center border-b border-zinc-900/80 pb-1.5">
+                    <span className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wide">📈 {language === 'vi' ? 'Chứng Chỉ Quỹ ETF' : 'ETF Provider Status'}</span>
+                    <span className="text-[9px] text-zinc-600 font-mono">{language === 'vi' ? 'Nguồn gốc' : 'Data flow'}</span>
+                  </div>
+                  <div className="space-y-2">
+                    {[
+                      { name: 'E1VFVN30', provider: 'FireAnt', price: marketPrices?.['E1VFVN30']?.price_vnd || 23450 },
+                      { name: 'FUEVFVND', provider: 'FireAnt / TCBS', price: marketPrices?.['FUEVFVND']?.price_vnd || 31200 },
+                      { name: 'FUESSVFL', provider: 'SSI', price: marketPrices?.['FUESSVFL']?.price_vnd || 22900 }
+                    ].map((etf, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-xs font-mono">
+                        <div>
+                          <span className="font-extrabold text-zinc-200">{etf.name}</span>
+                          <span className="text-[8px] text-zinc-600 block leading-none mt-0.5">{etf.provider}</span>
+                        </div>
+                        <span className="text-emerald-400 font-extrabold">{etf.price.toLocaleString('vi-VN')} <span className="text-[8px] text-zinc-600">₫</span></span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
             </div>
           </div>
 
@@ -1427,7 +1659,7 @@ Target structure:
                     </div>
                   </div>
 
-                  {/* Symbol choice */}
+                   {/* Symbol choice */}
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-mono font-bold tracking-wider text-zinc-500 uppercase block">
                       {language === 'vi' ? 'Lựa chọn Mã Tài Sản' : 'Select Ticker Symbol'}
@@ -1435,17 +1667,53 @@ Target structure:
                     <select
                       value={assetSymbol}
                       onChange={(e) => handleAssetSelectChange(e.target.value)}
-                      className="w-full bg-zinc-950 border border-zinc-900 rounded-xl px-3 py-2 text-zinc-200 text-xs font-bold focus:outline-none focus:border-zinc-800 transition-all"
+                      className="w-full bg-zinc-950 border border-zinc-900 rounded-xl px-3 py-2 text-zinc-200 text-xs font-bold focus:outline-none focus:border-zinc-800 transition-all cursor-pointer"
                     >
                       {assetType === 'ETF' ? (
                         <>
                           <option value="E1VFVN30">E1VFVN30 - Chứng chỉ quỹ ETF VN30 VFM</option>
                           <option value="FUEVFVND">FUEVFVND - Quỹ ETF DCVFMVN Diamond</option>
+                          <option value="FUEMAV30">FUEMAV30 - Quỹ ETF MAFM VN30</option>
+                          <option value="FUEKIV30">FUEKIV30 - Quỹ ETF KIM Growth VN30</option>
+                          <option value="FUEVN100">FUEVN100 - Quỹ ETF VinaCapital VN100</option>
+                          <option value="FUESSV30">FUESSV30 - Quỹ ETF SSIAM VN30</option>
+                          <option value="FUESSVFL">FUESSVFL - Quỹ ETF SSIAM VNFIN LEAD</option>
+                          <option value="FUESSV50">FUESSV50 - Quỹ ETF SSIAM VN50</option>
+                          <option value="FUETFID">FUETFID - Quỹ ETF IPAAM VN100</option>
+                          <option value="FUETCMID">FUETCMID - Quỹ ETF Techcom VN30</option>
                         </>
                       ) : (
                         <>
-                          <option value="GOLD_RING">GOLD_RING - Vàng nhẫn tròn 24K (Chỉ)</option>
-                          <option value="GOLD_SJC">GOLD_SJC - Vàng miếng ròng SJC 99.99 (Lượng)</option>
+                          <optgroup label={language === 'vi' ? "VÀNG TA / VÀNG CHUẨN 9999" : "PURE GOLD 99.99%"}>
+                            <option value="GOLD_TA_9999">GOLD_TA_9999 - Vàng ta / Vàng nhẫn 9999 (Chỉ)</option>
+                            <option value="GOLD_24K">GOLD_24K - Vàng ta 999 / Vàng 24K (Chỉ)</option>
+                            <option value="GOLD_SJC">GOLD_SJC - Vàng miếng ròng SJC 99.99 (Lượng)</option>
+                          </optgroup>
+                          <optgroup label={language === 'vi' ? "VÀNG TRẮNG" : "WHITE GOLD"}>
+                            <option value="GOLD_WHITE_10K">GOLD_WHITE_10K - Vàng trắng 10K (Chỉ)</option>
+                            <option value="GOLD_WHITE_14K">GOLD_WHITE_14K - Vàng trắng 14K (Chỉ)</option>
+                            <option value="GOLD_WHITE_18K">GOLD_WHITE_18K - Vàng trắng 18K (Chỉ)</option>
+                          </optgroup>
+                          <optgroup label={language === 'vi' ? "VÀNG HỒNG" : "ROSE GOLD"}>
+                            <option value="GOLD_ROSE_10K">GOLD_ROSE_10K - Vàng hồng 10K (Chỉ)</option>
+                            <option value="GOLD_ROSE_14K">GOLD_ROSE_14K - Vàng hồng 14K (Chỉ)</option>
+                            <option value="GOLD_ROSE_18K">GOLD_ROSE_18K - Vàng hồng 18K (Chỉ)</option>
+                          </optgroup>
+                          <optgroup label={language === 'vi' ? "VÀNG TÂY" : "WESTERN ACCOMPANYING GOLD"}>
+                            <option value="GOLD_WEST_8K">GOLD_WEST_8K - Vàng Tây 8K (Chỉ)</option>
+                            <option value="GOLD_WEST_9K">GOLD_WEST_9K - Vàng Tây 9K (Chỉ)</option>
+                            <option value="GOLD_WEST_10K">GOLD_WEST_10K - Vàng Tây 10K (Chỉ)</option>
+                            <option value="GOLD_WEST_14K">GOLD_WEST_14K - Vàng Tây 14K (Chỉ)</option>
+                            <option value="GOLD_WEST_18K">GOLD_WEST_18K - Vàng Tây 18K (Chỉ)</option>
+                          </optgroup>
+                          <optgroup label={language === 'vi' ? "VÀNG Ý SÁNG" : "ITALIAN GOLD"}>
+                            <option value="GOLD_ITALY_750">GOLD_ITALY_750 - Vàng Ý 750 (Chỉ)</option>
+                            <option value="GOLD_ITALY_925">GOLD_ITALY_925 - Vàng bạc Ý 925 (Gram)</option>
+                          </optgroup>
+                          <optgroup label={language === 'vi' ? "PHÂN HỆ KHÁC" : "OTHER CATEGORIES"}>
+                            <option value="GOLD_NON">GOLD_NON - Vàng non (Chỉ)</option>
+                            <option value="GOLD_MY_KY">GOLD_MY_KY - Vàng mỹ ký (Chỉ)</option>
+                          </optgroup>
                         </>
                       )}
                     </select>
@@ -1475,7 +1743,11 @@ Target structure:
                     />
                     <span className="text-[9px] text-zinc-500 font-mono block">
                       {assetType === 'GOLD' 
-                        ? (assetSymbol === 'GOLD_SJC' ? '* Định mức: VND một Lượng (SJC)' : '* Định mức: VND một Chỉ (24K)') 
+                        ? (assetSymbol === 'GOLD_SJC' 
+                            ? '* Định mức: VND một Lượng (SJC)' 
+                            : assetSymbol === 'GOLD_ITALY_925' 
+                              ? '* Định mức: VND một Gram (Vàng Ý 925)' 
+                              : '* Định mức: VND một Chỉ') 
                         : '* Định mức: VND một Chứng chỉ Quỹ'}
                     </span>
                   </div>
@@ -1549,8 +1821,8 @@ Target structure:
                 </h3>
 
                 {portfolioStats.items.length === 0 ? (
-                  <div className="py-12 text-center text-zinc-550 space-y-3">
-                    <HelpCircle className="w-8 h-8 text-zinc-750 mx-auto" />
+                  <div className="py-12 text-center text-zinc-500 space-y-3">
+                    <HelpCircle className="w-8 h-8 text-zinc-700 mx-auto" />
                     <p className="text-xs font-sans text-zinc-400">
                       {language === 'vi' ? 'Hệ thống chưa ghi nhận tài sản tích lũy.' : 'Your investment accumulation registry is empty.'}
                     </p>

@@ -182,7 +182,7 @@ export function LoginScreen() {
   const isDark = theme === 'dark';
 
   return (
-    <div className="min-h-screen bg-[#060608] flex flex-col justify-center items-center px-4 py-8 font-sans overflow-hidden relative transition-colors duration-200">
+    <div className="min-h-screen bg-zinc-950 flex flex-col justify-center items-center px-4 py-8 font-sans overflow-hidden relative transition-colors duration-200">
       
       {/* BACKGROUND GRAPHICS: Cyber-Mesh & Rotating Orbits */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -240,7 +240,7 @@ export function LoginScreen() {
         <div className="inline-flex items-center justify-center p-3.5 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/30 text-emerald-400 mb-3 shadow-[0_0_25px_rgba(16,185,129,0.2)]">
           <Sparkles className="w-6 h-6 animate-pulse" />
         </div>
-        <h1 className="text-2.5xl font-extrabold tracking-tight text-white font-sans sm:text-3.5xl">
+        <h1 className="text-2.5xl font-extrabold tracking-tight text-zinc-100 font-sans sm:text-3.5xl">
           FinCopilot <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 font-mono">DCA</span>
         </h1>
         <p className="text-zinc-500 text-xs mt-1.5 max-w-sm px-4">
@@ -650,7 +650,7 @@ export function LoginScreen() {
               {/* Close button */}
               <button
                 onClick={() => setActivePillarNode(null)}
-                className="absolute top-4 right-4 p-2 rounded-lg bg-zinc-950 border border-zinc-800 hover:border-zinc-700/80 text-zinc-400 hover:text-white transition-all cursor-pointer"
+                className="absolute top-4 right-4 p-2 rounded-lg bg-zinc-950 border border-zinc-800 hover:border-zinc-700/80 text-zinc-400 hover:text-zinc-100 transition-all cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -664,7 +664,7 @@ export function LoginScreen() {
                   <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest font-mono">
                     {language === 'vi' ? 'HƯỚNG DẪN CHI TIẾT TÍNH NĂNG' : 'DETAILED FEATURE EXPLANATION'}
                   </span>
-                  <h3 className="text-base font-extrabold text-white">
+                  <h3 className="text-base font-extrabold text-zinc-100">
                     {language === 'vi' 
                       ? pillarsDetails[activePillarNode as keyof typeof pillarsDetails].titleVi 
                       : pillarsDetails[activePillarNode as keyof typeof pillarsDetails].titleEn}

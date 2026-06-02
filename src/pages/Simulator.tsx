@@ -10,10 +10,12 @@ import { DCAGrowthChart } from '../components/charts/DCAGrowthChart';
 import { calculateDCA, DCAPoint } from '../lib/utils/finance';
 import { formatVND } from '../lib/utils/vnd';
 import { HelpCircle, Landmark, Award, ArrowUpRight } from 'lucide-react';
+import { Profile } from '../types';
 
 interface SimulatorProps {
   onSaveSimulation?: (sim: any) => void;
   savedSim?: any;
+  profile?: Profile;
 }
 
 const INSTRUMENTS_PRESETS = [
@@ -23,9 +25,15 @@ const INSTRUMENTS_PRESETS = [
   { id: 'custom', label: 'Tùy chọn tự doanh / tùy chỉnh', returnPct: 18, desc: 'Phản ánh lãi kép từ hoạt động buôn bán phụ hoặc kinh doanh.' },
 ];
 
-export function Simulator({ onSaveSimulation, savedSim }: SimulatorProps) {
-  // Simulator inputs
-  const [contribution, setContribution] = useState<number>(10000000); // 10 million default
+export function Simulator({ onSaveSimulation, savedSim, profile }: SimulatorProps) {
+  // Simulator inputs (prefill with user actual savings margin: income - expenses)
+  const [contribution, setContribution] = useState<number>(() => {
+    if (profile) {
+      const margin = profile.monthly_income_vnd - profile.monthly_expenses_vnd;
+      return margin > 0 ? margin : 10000000;
+    }
+    return 10000000; // 10 million default
+  });
   const [returnPct, setReturnPct] = useState<number>(11);
   const [years, setYears] = useState<number>(10);
   const [inflation, setInflation] = useState<number>(3.5);
@@ -137,7 +145,7 @@ export function Simulator({ onSaveSimulation, savedSim }: SimulatorProps) {
                 }}
                 className="w-full accent-emerald-500 bg-zinc-950 rounded h-1 cursor-pointer"
               />
-              <span className="text-[10px] text-zinc-550 text-zinc-500">VN30 tích sản thực tế đạt ~10-12% dài hạn.</span>
+              <span className="text-[10px] text-zinc-500">VN30 tích sản thực tế đạt ~10-12% dài hạn.</span>
             </div>
 
             {/* Multi-year period */}
@@ -178,7 +186,7 @@ export function Simulator({ onSaveSimulation, savedSim }: SimulatorProps) {
                 onChange={(e) => setInflation(parseFloat(e.target.value))}
                 className="w-full accent-indigo-400 bg-zinc-950 rounded h-1 cursor-pointer"
               />
-              <span className="text-[10px] text-zinc-550 text-zinc-550 text-zinc-500">Bình quân lạm phát CPI Việt Nam ở mức ~3-4%/năm.</span>
+              <span className="text-[10px] text-zinc-500">Bình quân lạm phát CPI Việt Nam ở mức ~3-4%/năm.</span>
             </div>
 
           </div>
@@ -193,7 +201,7 @@ export function Simulator({ onSaveSimulation, savedSim }: SimulatorProps) {
               <div className="backdrop-blur-md bg-zinc-900/40 border border-zinc-800/60 rounded-xl p-3.5 space-y-1 shadow-sm">
                 <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono">Tổng vốn gốc góp</span>
                 <p className="text-zinc-200 font-bold text-sm tracking-tight">{formatVND(finalPoint.contributed)}</p>
-                <span className="text-[10px] text-zinc-550 text-zinc-500 leading-none">vốn tích lũy túi phát</span>
+                <span className="text-[10px] text-zinc-500 leading-none">vốn tích lũy túi phát</span>
               </div>
               
               <div className="backdrop-blur-md bg-zinc-900/65 border border-emerald-500/15 rounded-xl p-3.5 space-y-1 shadow-[0_0_15px_rgba(16,185,129,0.02)]">
@@ -207,7 +215,7 @@ export function Simulator({ onSaveSimulation, savedSim }: SimulatorProps) {
               <div className="backdrop-blur-md bg-zinc-900/40 border border-indigo-500/15 rounded-xl p-3.5 space-y-1 shadow-[0_0_15px_rgba(99,102,241,0.02)]">
                 <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono font-bold">Giá trị thực tế (trừ lạm phát)</span>
                 <p className="text-indigo-400 font-bold text-sm tracking-tight">{formatVND(finalPoint.real)}</p>
-                <span className="text-[10px] text-zinc-550 text-zinc-500 leading-none">bằng sức mua quy đổi năm thứ 0</span>
+                <span className="text-[10px] text-zinc-500 leading-none">bằng sức mua quy đổi năm thứ 0</span>
               </div>
             </div>
           )}

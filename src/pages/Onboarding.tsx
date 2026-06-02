@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { OnboardingStep1 } from '../components/forms/OnboardingStep1';
 import { OnboardingStep2 } from '../components/forms/OnboardingStep2';
@@ -25,6 +25,11 @@ export function Onboarding({ profile, updateProfile, setActiveTab }: OnboardingP
 
   // Read draft state from profile prop
   const [formData, setFormData] = useState<Profile>({ ...profile });
+
+  // Keep form steps in sync with profile updates from resets/loads
+  useEffect(() => {
+    setFormData({ ...profile });
+  }, [profile]);
 
   const handleDataChange = (updates: any) => {
     setFormData((prev) => {

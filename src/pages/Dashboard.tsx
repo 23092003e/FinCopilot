@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { NetWorthChart } from '../components/charts/NetWorthChart';
 import { AllocationPieChart } from '../components/charts/AllocationPieChart';
@@ -22,9 +22,18 @@ interface DashboardProps {
   addCheckin: (checkin: Omit<Checkin, 'id' | 'created_at' | 'user_id'>, aiReview: string) => void;
   setActiveTab: (tab: string) => void;
   transactions?: Transaction[];
+  assetHoldings?: any[];
 }
 
-export function Dashboard({ profile, allocation, checkins, addCheckin, setActiveTab, transactions = [] }: DashboardProps) {
+export function Dashboard({ 
+  profile, 
+  allocation, 
+  checkins, 
+  addCheckin, 
+  setActiveTab, 
+  transactions = [], 
+  assetHoldings = [] 
+}: DashboardProps) {
   const { language, t } = useUI();
   // New check-in form state
   const [income, setIncome] = useState('');
@@ -33,6 +42,70 @@ export function Dashboard({ profile, allocation, checkins, addCheckin, setActive
   const [notes, setNotes] = useState('');
   const [loadingReview, setLoadingReview] = useState(false);
   const [errorReview, setErrorReview] = useState('');
+  const [marketPrices, setMarketPrices] = useState<any>(null);
+
+  // Poll for latest market rates to count values live
+  useEffect(() => {
+    const fetchPrices = async () => {
+      try {
+        const res = await fetch('/api/market-prices');
+        if (res.ok) {
+          const data = await res.json();
+          setMarketPrices(data);
+        }
+      } catch (err) {
+        console.warn('Error fetching live rates in dashboard:', err);
+      }
+    };
+    fetchPrices();
+    const interval = setInterval(fetchPrices, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Compute portfolio's current total asset valuation
+  const portfolioValue = useMemo(() => {
+    let total = 0;
+    const defaultBases: Record<string, number> = {
+      E1VFVN30: 23450,
+      FUEVFVND: 31200,
+      FUEMAV30: 15800,
+      FUEKIV30: 12400,
+      FUEVN100: 17100,
+      FUESSV30: 16200,
+      FUESSVFL: 22900,
+      FUESSV50: 18700,
+      FUETFID: 14500,
+      FUETCMID: 13650,
+      GOLD_TA_9999: 8200000,
+      GOLD_24K: 8150000,
+      GOLD_WHITE_10K: 3450000,
+      GOLD_WHITE_14K: 4850000,
+      GOLD_WHITE_18K: 6250000,
+      GOLD_ROSE_10K: 3400000,
+      GOLD_ROSE_14K: 4800000,
+      GOLD_ROSE_18K: 6200000,
+      GOLD_WEST_8K: 2700000,
+      GOLD_WEST_9K: 3050000,
+      GOLD_WEST_10K: 3350000,
+      GOLD_WEST_14K: 4750000,
+      GOLD_WEST_18K: 6150000,
+      GOLD_ITALY_750: 5550000,
+      GOLD_ITALY_925: 180000,
+      GOLD_NON: 2500000,
+      GOLD_MY_KY: 50000,
+      GOLD_SJC: 90500000,
+      GOLD_RING: 7850000
+    };
+
+    assetHoldings.forEach((h: any) => {
+      // Find current live price, fallback to item's logged buy price or hardcoded base
+      const livePrice = (marketPrices && marketPrices[h.symbol])
+        ? marketPrices[h.symbol].price_vnd
+        : (defaultBases[h.symbol] || h.price_vnd || 0);
+      total += h.quantity * livePrice;
+    });
+    return total;
+  }, [assetHoldings, marketPrices]);
 
   // Auto calculate and memoize monthly ledger aggregates
   const currentMonthStr = useMemo(() => new Date().toISOString().substring(0, 7), []);
@@ -231,7 +304,7 @@ export function Dashboard({ profile, allocation, checkins, addCheckin, setActive
 
       {/* 1. NetWorth KPI Bento Card Block */}
       <NetWorthChart
-        savings={profile.total_savings_vnd}
+        savings={profile.total_savings_vnd + portfolioValue}
         income={profile.monthly_income_vnd}
         expenses={profile.monthly_expenses_vnd}
         debt={profile.debt_amount_vnd}

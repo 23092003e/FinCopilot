@@ -29,12 +29,15 @@ export default function App() {
     sideHustles,
     checkins,
     transactions,
+    assetHoldings,
     updateProfile,
     updateAllocation,
     updateSideHustles,
     addCheckin,
     addTransaction,
     deleteTransaction,
+    addAssetHolding,
+    deleteAssetHolding,
     resetAllData,
   } = useProfile(user?.uid);
 
@@ -103,6 +106,9 @@ export default function App() {
             deleteTransaction={deleteTransaction}
             addCheckin={addCheckin}
             setActiveTab={setActiveTab}
+            assetHoldings={assetHoldings}
+            addAssetHolding={addAssetHolding}
+            deleteAssetHolding={deleteAssetHolding}
           />
         );
       case 'simulator':

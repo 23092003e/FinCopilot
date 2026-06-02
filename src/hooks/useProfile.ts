@@ -4,7 +4,47 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Profile, AllocationResponse, SideHustleIdea, Checkin, Transaction } from '../types';
+import { Profile, AllocationResponse, SideHustleIdea, Checkin, Transaction, AssetHoldingLog } from '../types';
+
+// Standard preset holdings for early-career professionals
+const getPresetAssetHoldings = (userId: string = 'local_user_id'): AssetHoldingLog[] => {
+  const yearMonth = new Date().toISOString().substring(0, 7);
+  return [
+    {
+      id: 'ahl1',
+      user_id: userId,
+      asset_type: 'ETF',
+      symbol: 'E1VFVN30',
+      price_vnd: 22100,
+      quantity: 200,
+      date: `${yearMonth}-03`,
+      notes: 'Gom chứng chỉ quỹ ETF VN30 khớp lệnh tự động',
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'ahl2',
+      user_id: userId,
+      asset_type: 'ETF',
+      symbol: 'E1VFVN30',
+      price_vnd: 22800,
+      quantity: 300,
+      date: `${yearMonth}-12`,
+      notes: 'Thêm khi giá điều chỉnh nhẹ, tiếp tục dồn tiền',
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'ahl3',
+      user_id: userId,
+      asset_type: 'GOLD',
+      symbol: 'GOLD_RING',
+      price_vnd: 7650000,
+      quantity: 2,
+      date: `${yearMonth}-02`,
+      notes: 'Tích sản 2 chỉ vàng nhẫn an sinh xã hội',
+      created_at: new Date().toISOString()
+    }
+  ];
+};
 
 // Standard high-quality presets for Vietnamese early-career professionals (e.g. tech engineer, age 27, saving 150M)
 const PRESET_PROFILE: Profile = {
@@ -205,6 +245,12 @@ export function useProfile(userId?: string) {
     return saved ? JSON.parse(saved) : getPresetTransactions(userId);
   });
 
+  const [assetHoldings, setAssetHoldingsState] = useState<AssetHoldingLog[]>(() => {
+    const key = userId ? `fincopilot_${userId}_asset_holdings` : 'fincopilot_asset_holdings';
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : getPresetAssetHoldings(userId);
+  });
+
   // Track switching of users and reload their storage instantly
   useEffect(() => {
     const key_profile = userId ? `fincopilot_${userId}_profile` : 'fincopilot_profile';
@@ -213,6 +259,7 @@ export function useProfile(userId?: string) {
     const key_checkins = userId ? `fincopilot_${userId}_checkins` : 'fincopilot_checkins';
     const key_dca = userId ? `fincopilot_${userId}_dca_simulation` : 'fincopilot_dca_simulation';
     const key_tx = userId ? `fincopilot_${userId}_transactions` : 'fincopilot_transactions';
+    const key_assets = userId ? `fincopilot_${userId}_asset_holdings` : 'fincopilot_asset_holdings';
 
     const p = localStorage.getItem(key_profile);
     const a = localStorage.getItem(key_allocation);
@@ -220,6 +267,7 @@ export function useProfile(userId?: string) {
     const c = localStorage.getItem(key_checkins);
     const d = localStorage.getItem(key_dca);
     const tx = localStorage.getItem(key_tx);
+    const ah = localStorage.getItem(key_assets);
 
     if (p) {
       setProfileState(JSON.parse(p));
@@ -258,6 +306,7 @@ export function useProfile(userId?: string) {
     setCheckinsState(c ? JSON.parse(c) : (userId ? [] : PRESET_CHECKINS));
     setDcaSimulationState(d ? JSON.parse(d) : null);
     setTransactionsState(tx ? JSON.parse(tx) : getPresetTransactions(userId));
+    setAssetHoldingsState(ah ? JSON.parse(ah) : getPresetAssetHoldings(userId));
   }, [userId]);
 
   // Sync state changes with localStorage
@@ -328,6 +377,30 @@ export function useProfile(userId?: string) {
     });
   };
 
+  const addAssetHolding = (holding: Omit<AssetHoldingLog, 'id' | 'user_id' | 'created_at'>) => {
+    const newHolding: AssetHoldingLog = {
+      ...holding,
+      id: 'ahl_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      user_id: userId || 'local_user_id',
+      created_at: new Date().toISOString()
+    };
+    setAssetHoldingsState((prev) => {
+      const newList = [newHolding, ...prev];
+      const key = userId ? `fincopilot_${userId}_asset_holdings` : 'fincopilot_asset_holdings';
+      localStorage.setItem(key, JSON.stringify(newList));
+      return newList;
+    });
+  };
+
+  const deleteAssetHolding = (holdingId: string) => {
+    setAssetHoldingsState((prev) => {
+      const newList = prev.filter(h => h.id !== holdingId);
+      const key = userId ? `fincopilot_${userId}_asset_holdings` : 'fincopilot_asset_holdings';
+      localStorage.setItem(key, JSON.stringify(newList));
+      return newList;
+    });
+  };
+
   const resetAllData = (wipeBlank: boolean = true) => {
     const pref = userId ? `fincopilot_${userId}_` : 'fincopilot_';
     
@@ -359,6 +432,7 @@ export function useProfile(userId?: string) {
       localStorage.setItem(`${pref}side_hustles`, JSON.stringify([]));
       localStorage.setItem(`${pref}checkins`, JSON.stringify([]));
       localStorage.setItem(`${pref}transactions`, JSON.stringify([]));
+      localStorage.setItem(`${pref}asset_holdings`, JSON.stringify([]));
       localStorage.removeItem(`${pref}dca_simulation`);
 
       setProfileState(blankProfile);
@@ -367,6 +441,7 @@ export function useProfile(userId?: string) {
       setCheckinsState([]);
       setDcaSimulationState(null);
       setTransactionsState([]);
+      setAssetHoldingsState([]);
     } else {
       // Clear specific user settings to fall back to clean demo presets
       localStorage.removeItem(`${pref}profile`);
@@ -374,6 +449,7 @@ export function useProfile(userId?: string) {
       localStorage.removeItem(`${pref}side_hustles`);
       localStorage.removeItem(`${pref}checkins`);
       localStorage.removeItem(`${pref}transactions`);
+      localStorage.removeItem(`${pref}asset_holdings`);
       localStorage.removeItem(`${pref}dca_simulation`);
 
       if (userId) {
@@ -402,6 +478,7 @@ export function useProfile(userId?: string) {
         setCheckinsState(PRESET_CHECKINS);
         setDcaSimulationState(null);
         setTransactionsState(getPresetTransactions(userId));
+        setAssetHoldingsState(getPresetAssetHoldings(userId));
       } else {
         setProfileState(PRESET_PROFILE);
         setAllocationState(PRESET_ALLOCATION);
@@ -409,6 +486,7 @@ export function useProfile(userId?: string) {
         setCheckinsState(PRESET_CHECKINS);
         setDcaSimulationState(null);
         setTransactionsState(getPresetTransactions());
+        setAssetHoldingsState(getPresetAssetHoldings());
       }
     }
   };
@@ -420,6 +498,7 @@ export function useProfile(userId?: string) {
     checkins,
     dcaSimulation,
     transactions,
+    assetHoldings,
     updateProfile,
     updateAllocation,
     updateSideHustles,
@@ -427,6 +506,8 @@ export function useProfile(userId?: string) {
     addCheckin,
     addTransaction,
     deleteTransaction,
+    addAssetHolding,
+    deleteAssetHolding,
     resetAllData,
   };
 }

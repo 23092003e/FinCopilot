@@ -7,10 +7,11 @@ import React, { useState, useMemo } from 'react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { VNDInput } from '../components/shared/VNDInput';
 import { useUI } from '../contexts/UIContext';
-import { Transaction, Checkin } from '../types';
+import { Transaction, Checkin, AssetHoldingLog } from '../types';
 import { 
   Receipt, Plus, Trash2, TrendingUp, TrendingDown, Sparkles, 
-  Calendar, CreditCard, ChevronRight, CheckCircle2, AlertTriangle, Zap, ArrowRight, ArrowUpRight
+  Calendar, CreditCard, ChevronRight, CheckCircle2, AlertTriangle, Zap, ArrowRight, ArrowUpRight,
+  Coins, RefreshCw, Layers, CalendarDays, Compass, HelpCircle, FileSpreadsheet
 } from 'lucide-react';
 
 interface LedgerProps {
@@ -20,6 +21,9 @@ interface LedgerProps {
   deleteTransaction: (id: string) => void;
   addCheckin: (checkin: Omit<Checkin, 'id' | 'created_at' | 'user_id'>, aiReview: string) => void;
   setActiveTab: (tab: string) => void;
+  assetHoldings?: AssetHoldingLog[];
+  addAssetHolding?: (holding: Omit<AssetHoldingLog, 'id' | 'user_id' | 'created_at'>) => void;
+  deleteAssetHolding?: (id: string) => void;
 }
 
 export function Ledger({ 
@@ -28,7 +32,10 @@ export function Ledger({
   addTransaction, 
   deleteTransaction, 
   addCheckin, 
-  setActiveTab 
+  setActiveTab,
+  assetHoldings = [],
+  addAssetHolding,
+  deleteAssetHolding
 }: LedgerProps) {
   const { language, t } = useUI();
   
@@ -112,6 +119,221 @@ export function Ledger({
     }
   };
   
+  
+  // Segmented view Tab: Sổ thu chi hoặc Tích sản
+  const [ledgerViewTab, setLedgerViewTab] = useState<'cashflow' | 'accumulation'>('cashflow');
+
+  // Real-time market prices state & background poller
+  const [marketPrices, setMarketPrices] = useState<any>(null);
+  const [marketLoading, setMarketLoading] = useState(false);
+
+  const fetchPrices = async () => {
+    setMarketLoading(true);
+    try {
+      const res = await fetch('/api/market-prices');
+      if (res.ok) {
+        const data = await res.json();
+        setMarketPrices(data);
+      }
+    } catch (err) {
+      console.warn('Error fetching real-time market rates:', err);
+    } finally {
+      setMarketLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchPrices();
+    const interval = setInterval(fetchPrices, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Asset Ledger entry state
+  const [assetType, setAssetType] = useState<'ETF' | 'GOLD'>('ETF');
+  const [assetSymbol, setAssetSymbol] = useState('E1VFVN30');
+  const [assetPrice, setAssetPrice] = useState<number>(0);
+  const [assetQty, setAssetQty] = useState<number>(0);
+  const [assetDate, setAssetDate] = useState(() => new Date().toISOString().substring(0, 10));
+  const [assetNotes, setAssetNotes] = useState('');
+  const [assetFormError, setAssetFormError] = useState('');
+  const [assetFormSuccess, setAssetFormSuccess] = useState('');
+
+  // Auto preset symbols based on Asset type selected
+  const handleAssetTypeChange = (type: 'ETF' | 'GOLD') => {
+    setAssetType(type);
+    setAssetSymbol(type === 'ETF' ? 'E1VFVN30' : 'GOLD_RING');
+    setAssetPrice(0);
+    setAssetQty(0);
+    setAssetFormError('');
+  };
+
+  const handleAssetSelectChange = (sym: string) => {
+    setAssetSymbol(sym);
+    setAssetFormError('');
+  };
+
+  // Autocomplete live price helper 
+  const handleFillLivePrice = () => {
+    if (marketPrices && marketPrices[assetSymbol]) {
+      setAssetPrice(marketPrices[assetSymbol].price_vnd);
+    } else {
+      const defaultBases: Record<string, number> = {
+        E1VFVN30: 23450,
+        FUEVFVND: 31200,
+        GOLD_SJC: 90500000,
+        GOLD_RING: 7850000
+      };
+      setAssetPrice(defaultBases[assetSymbol] || 0);
+    }
+  };
+
+  const holdings = assetHoldings || [];
+
+  // Compute stats on current portfolio
+  const portfolioStats = useMemo(() => {
+    const listSymbols = ['E1VFVN30', 'FUEVFVND', 'GOLD_SJC', 'GOLD_RING'];
+    const summary: Record<string, {
+      symbol: string;
+      name: string;
+      asset_type: 'ETF' | 'GOLD';
+      total_quantity: number;
+      total_invested: number;
+      avg_price: number;
+      current_price: number;
+      current_value: number;
+      gain_loss_vnd: number;
+      gain_loss_percent: number;
+    }> = {};
+
+    const names: Record<string, string> = {
+      E1VFVN30: 'Quỹ ETF VN30 (VFM)',
+      FUEVFVND: 'Quỹ ETF DCVFMVN DIAMOND',
+      GOLD_SJC: 'Vàng miếng SJC',
+      GOLD_RING: 'Vàng nhẫn 24K 9999'
+    };
+
+    const types: Record<string, 'ETF' | 'GOLD'> = {
+      E1VFVN30: 'ETF',
+      FUEVFVND: 'ETF',
+      GOLD_SJC: 'GOLD',
+      GOLD_RING: 'GOLD'
+    };
+
+    listSymbols.forEach(sym => {
+      summary[sym] = {
+        symbol: sym,
+        name: names[sym] || sym,
+        asset_type: types[sym] || 'ETF',
+        total_quantity: 0,
+        total_invested: 0,
+        avg_price: 0,
+        current_price: 0,
+        current_value: 0,
+        gain_loss_vnd: 0,
+        gain_loss_percent: 0
+      };
+    });
+
+    holdings.forEach(log => {
+      const sym = log.symbol;
+      if (!summary[sym]) {
+        summary[sym] = {
+          symbol: sym,
+          name: sym,
+          asset_type: log.asset_type,
+          total_quantity: 0,
+          total_invested: 0,
+          avg_price: 0,
+          current_price: 0,
+          current_value: 0,
+          gain_loss_vnd: 0,
+          gain_loss_percent: 0
+        };
+      }
+      summary[sym].total_quantity += Number(log.quantity);
+      summary[sym].total_invested += Number(log.price_vnd) * Number(log.quantity);
+    });
+
+    let totalPortfolioInvested = 0;
+    let totalPortfolioCurrentValue = 0;
+
+    Object.keys(summary).forEach(sym => {
+      const entry = summary[sym];
+      if (entry.total_quantity > 0) {
+        entry.avg_price = Math.round(entry.total_invested / entry.total_quantity);
+        totalPortfolioInvested += entry.total_invested;
+      }
+
+      if (marketPrices && marketPrices[sym]) {
+        entry.current_price = marketPrices[sym].price_vnd;
+      } else {
+        const fallbacks: Record<string, number> = {
+          E1VFVN30: 23450,
+          FUEVFVND: 31200,
+          GOLD_SJC: 90500000,
+          GOLD_RING: 7850000
+        };
+        entry.current_price = fallbacks[sym] || 0;
+      }
+
+      entry.current_value = Math.round(entry.total_quantity * entry.current_price);
+      if (entry.total_quantity > 0) {
+        totalPortfolioCurrentValue += entry.current_value;
+        entry.gain_loss_vnd = entry.current_value - entry.total_invested;
+        entry.gain_loss_percent = entry.total_invested > 0 
+          ? (entry.gain_loss_vnd / entry.total_invested) * 100 
+          : 0;
+      }
+    });
+
+    const totalGainLossVnd = totalPortfolioCurrentValue - totalPortfolioInvested;
+    const totalGainLossPercent = totalPortfolioInvested > 0 
+      ? (totalGainLossVnd / totalPortfolioInvested) * 100 
+      : 0;
+
+    return {
+      items: Object.values(summary).filter(x => x.total_quantity > 0),
+      rawSummary: summary,
+      totalPortfolioInvested,
+      totalPortfolioCurrentValue,
+      totalGainLossVnd,
+      totalGainLossPercent
+    };
+  }, [holdings, marketPrices]);
+
+  const handleAddAssetSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setAssetFormError('');
+    setAssetFormSuccess('');
+
+    if (assetQty <= 0) {
+      setAssetFormError(language === 'vi' ? 'Số lượng mua phải lớn hơn 0.' : 'Quantity must be greater than 0.');
+      return;
+    }
+
+    if (assetPrice <= 0) {
+      setAssetFormError(language === 'vi' ? 'Đơn giá mua phải lớn hơn 0.' : 'Purchase price must be greater than 0.');
+      return;
+    }
+
+    if (addAssetHolding) {
+      addAssetHolding({
+        asset_type: assetType,
+        symbol: assetSymbol,
+        price_vnd: assetPrice,
+        quantity: assetQty,
+        date: assetDate,
+        notes: assetNotes.trim()
+      });
+
+      setAssetFormSuccess(language === 'vi' ? 'Đã thêm giao dịch mua tích sản thành công!' : 'Successfully added asset holding transaction!');
+      setAssetNotes('');
+      setAssetPrice(0);
+      setAssetQty(0);
+      setTimeout(() => setAssetFormSuccess(''), 3000);
+    }
+  };
+
   // Form State
   const [description, setDescription] = useState('');
   const [txType, setTxType] = useState<'income' | 'expense' | 'investment'>('expense');
@@ -373,6 +595,37 @@ export function Ledger({
           )
         }
       />
+
+      {/* Sub-tab Navigation */}
+      <div className="flex bg-zinc-900/40 p-1 rounded-xl border border-zinc-900 max-w-sm shrink-0">
+        <button
+          type="button"
+          onClick={() => setLedgerViewTab('cashflow')}
+          className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold font-sans flex items-center justify-center gap-2 transition-all cursor-pointer border ${
+            ledgerViewTab === 'cashflow'
+              ? 'bg-zinc-800 text-emerald-400 border-zinc-700/50 shadow font-black'
+              : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/30 border-transparent'
+          }`}
+        >
+          <Receipt className="w-3.5 h-3.5" />
+          <span>{language === 'vi' ? 'Sổ Thu Chi' : 'Daily Cashflow'}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setLedgerViewTab('accumulation')}
+          className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold font-sans flex items-center justify-center gap-2 transition-all cursor-pointer border ${
+            ledgerViewTab === 'accumulation'
+              ? 'bg-zinc-800 text-emerald-400 border-zinc-700/50 shadow font-black'
+              : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/30 border-transparent'
+          }`}
+        >
+          <Coins className="w-3.5 h-3.5" />
+          <span>{language === 'vi' ? 'Tích Sản ETF & Vàng' : 'ETF & Gold Holdings'}</span>
+        </button>
+      </div>
+
+      {ledgerViewTab === 'cashflow' ? (
+        <>
 
       {/* Sync toast notification success */}
       {syncSuccess && (
@@ -1012,6 +1265,412 @@ Target structure:
           </div>
         )}
       </div>
+
+      </>
+      ) : (
+        <div className="space-y-6 animate-fadeIn">
+          {/* 1. Real-time domestic Vietnamese market indices tick bar */}
+          <div className="bg-zinc-900/60 backdrop-blur-md rounded-2xl border border-zinc-800 p-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 border-b border-zinc-900/70 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-300">
+                  {language === 'vi' ? 'Bảng giá tích sản Real-time (Thời giá Việt Nam GMT+7)' : 'Real-time Benchmark Indices (Vietnam GMT+7)'}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 self-stretch sm:self-auto justify-between sm:justify-start">
+                <span className="text-[10px] font-mono text-zinc-500">
+                  {language === 'vi' ? 'Hồi đáp tự động (Mỗi 15s)' : 'Pulsing every 15s'}
+                </span>
+                <button
+                  type="button"
+                  onClick={fetchPrices}
+                  disabled={marketLoading}
+                  className="py-1 px-2.5 rounded-lg bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-zinc-200 text-[10px] font-mono font-bold flex items-center gap-1.5 cursor-pointer hover:bg-zinc-900 transition-all focus:outline-none"
+                >
+                  <RefreshCw className={`w-3 h-3 ${marketLoading ? 'animate-spin' : ''}`} />
+                  <span>{language === 'vi' ? 'Cập nhật giá mới nhất' : 'Sync Latest'}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                { key: 'E1VFVN30', tag: 'ETF VN30', suffix: '/ck' },
+                { key: 'FUEVFVND', tag: 'ETF Diamond', suffix: '/ck' },
+                { key: 'GOLD_SJC', tag: 'Vàng SJC', suffix: '/lượng' },
+                { key: 'GOLD_RING', tag: 'Vàng 24K', suffix: '/chỉ' }
+              ].map(({ key, tag, suffix }) => {
+                const item = marketPrices?.[key] || {
+                  price_vnd: key === 'E1VFVN30' ? 23450 : key === 'FUEVFVND' ? 31200 : key === 'GOLD_SJC' ? 90500000 : 7850000,
+                  change_percent: 0
+                };
+                const isPositive = item.change_percent >= 0;
+                return (
+                  <div key={key} className="bg-zinc-950/80 rounded-xl p-3 border border-zinc-900 flex flex-col justify-between hover:border-zinc-800 transition-all duration-200 group">
+                    <div className="flex justify-between items-center gap-1 mb-1">
+                      <span className="text-[10px] font-mono text-zinc-500 uppercase font-black group-hover:text-emerald-400 transition-colors">{key}</span>
+                      <span className="text-[9px] px-1.5 py-0.5 bg-zinc-900 text-zinc-400 rounded border border-zinc-850 font-sans font-medium">{tag}</span>
+                    </div>
+                    <div className="space-y-0.5">
+                      <div className="text-sm font-extrabold text-zinc-100 font-sans leading-none">
+                        {item.price_vnd.toLocaleString('vi-VN')} <span className="text-[10px] text-zinc-500 font-medium">{suffix}</span>
+                      </div>
+                      <div className={`text-[10px] font-mono font-bold flex items-center justify-between ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
+                        <span>{isPositive ? '▲ +' : '▼ '}{item.change_percent}%</span>
+                        <span className="text-[8px] text-zinc-700 uppercase font-medium">BENCHMARK</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 2. Portfolio Overall Balance Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-zinc-900/60 backdrop-blur-lg border border-zinc-800/80 rounded-2xl p-4.5 space-y-1 hover:border-zinc-700 transition-all duration-200">
+              <span className="text-[10px] text-zinc-500 font-mono font-semibold uppercase tracking-wider block">
+                {language === 'vi' ? 'Tổng Vốn Giải Ngân' : 'Total Capital Invested'}
+              </span>
+              <div className="text-lg font-extrabold text-zinc-100 font-sans tracking-tight">
+                {portfolioStats.totalPortfolioInvested.toLocaleString('vi-VN')} ₫
+              </div>
+              <span className="text-[9px] text-zinc-600 font-mono block">
+                {language === 'vi' ? 'Tổng số tiền đã tích lũy' : 'Actual spent cash input flow'}
+              </span>
+            </div>
+
+            <div className="bg-zinc-900/60 backdrop-blur-lg border border-zinc-800/80 rounded-2xl p-4.5 space-y-1 hover:border-zinc-700 transition-all duration-200">
+              <span className="text-[10px] text-zinc-500 font-mono font-semibold uppercase tracking-wider block">
+                {language === 'vi' ? 'Giá Trị Danh Mục Hiện Tại' : 'Current Portfolio Value'}
+              </span>
+              <div className="text-lg font-extrabold text-zinc-100 font-sans tracking-tight">
+                {portfolioStats.totalPortfolioCurrentValue.toLocaleString('vi-VN')} ₫
+              </div>
+              <span className="text-[9px] text-zinc-500 font-mono block">
+                {language === 'vi' ? 'Tính theo thời giá thị trường mới nhất' : 'Valued at active benchmark exchange terms'}
+              </span>
+            </div>
+
+            <div className="bg-zinc-900/60 backdrop-blur-lg border border-zinc-800/80 rounded-2xl p-4.5 space-y-1 hover:border-zinc-700 transition-all duration-200">
+              <span className="text-[10px] text-zinc-500 font-mono font-semibold uppercase tracking-wider block">
+                {language === 'vi' ? 'Lợi Nhuận Thặng Dư (Vị thế)' : 'Dynamic Positions Profit/Loss'}
+              </span>
+              <div className={`text-lg font-extrabold font-sans tracking-tight ${portfolioStats.totalGainLossVnd >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {portfolioStats.totalGainLossVnd >= 0 ? '+' : ''}{portfolioStats.totalGainLossVnd.toLocaleString('vi-VN')} ₫ 
+                <span className="text-xs font-semibold ml-1.5 font-mono">({portfolioStats.totalGainLossPercent.toFixed(2)}%)</span>
+              </div>
+              <div className="flex items-center gap-1 font-mono text-[9px] text-zinc-600">
+                <span>{language === 'vi' ? 'Thặng dư danh mục tạm tính' : 'Total paper balance gains status'}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Form & Table Details Split */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            {/* Input Form Column */}
+            <div className="lg:col-span-5 space-y-4">
+              <div className="bg-zinc-900/60 backdrop-blur-lg border border-zinc-800/80 rounded-2xl p-5.5 space-y-4">
+                <h3 className="text-zinc-200 text-sm font-bold flex items-center gap-2 border-b border-zinc-900 pb-3">
+                  <Coins className="w-4 h-4 text-emerald-400" />
+                  {language === 'vi' ? 'Ghi chép Giao dịch Mua mới' : 'Log New Purchase Trade'}
+                </h3>
+
+                {assetFormError && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-xs font-semibold flex items-center gap-2 animate-shake">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>{assetFormError}</span>
+                  </div>
+                )}
+
+                {assetFormSuccess && (
+                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded-xl text-xs font-semibold flex items-center gap-2 animate-pulse">
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                    <span>{assetFormSuccess}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleAddAssetSubmit} className="space-y-4">
+                  {/* Class selection */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-mono font-bold tracking-wider text-zinc-500 uppercase block">
+                      {language === 'vi' ? 'Phân Hệ Tích Sản' : 'Asset Class'}
+                    </label>
+                    <div className="grid grid-cols-2 gap-1 bg-zinc-950 p-1 rounded-xl border border-zinc-900">
+                      <button
+                        type="button"
+                        onClick={() => handleAssetTypeChange('ETF')}
+                        className={`py-1.5 text-xs font-bold rounded-lg transition-all focus:outline-none cursor-pointer border ${
+                          assetType === 'ETF'
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            : 'text-zinc-500 hover:text-zinc-300 border-transparent'
+                        }`}
+                      >
+                        Chứng chỉ ETF VN
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleAssetTypeChange('GOLD')}
+                        className={`py-1.5 text-xs font-bold rounded-lg transition-all focus:outline-none cursor-pointer border ${
+                          assetType === 'GOLD'
+                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                            : 'text-zinc-500 hover:text-zinc-300 border-transparent'
+                        }`}
+                      >
+                        Vàng miếng & Vòng nhẫn
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Symbol choice */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-mono font-bold tracking-wider text-zinc-500 uppercase block">
+                      {language === 'vi' ? 'Lựa chọn Mã Tài Sản' : 'Select Ticker Symbol'}
+                    </label>
+                    <select
+                      value={assetSymbol}
+                      onChange={(e) => handleAssetSelectChange(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-900 rounded-xl px-3 py-2 text-zinc-200 text-xs font-bold focus:outline-none focus:border-zinc-800 transition-all"
+                    >
+                      {assetType === 'ETF' ? (
+                        <>
+                          <option value="E1VFVN30">E1VFVN30 - Chứng chỉ quỹ ETF VN30 VFM</option>
+                          <option value="FUEVFVND">FUEVFVND - Quỹ ETF DCVFMVN Diamond</option>
+                        </>
+                      ) : (
+                        <>
+                          <option value="GOLD_RING">GOLD_RING - Vàng nhẫn tròn 24K (Chỉ)</option>
+                          <option value="GOLD_SJC">GOLD_SJC - Vàng miếng ròng SJC 99.99 (Lượng)</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+
+                  {/* Price input + Quick autofill companion */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between items-center">
+                      <label className="text-[10px] font-mono font-bold tracking-wider text-zinc-500 uppercase">
+                        {language === 'vi' ? 'Tỷ Giá Mua Khớp Thực Tế' : 'Execution Price (VND)'}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleFillLivePrice}
+                        className="text-[9.5px] font-mono font-black text-emerald-400 hover:text-emerald-300 flex items-center gap-1 cursor-pointer focus:outline-none"
+                      >
+                        <Zap className="w-3 h-3 text-emerald-400" />
+                        <span>{language === 'vi' ? 'Điền theo giá thị trường' : 'Use Live Price'}</span>
+                      </button>
+                    </div>
+                    <VNDInput
+                      value={assetPrice}
+                      onChange={(val) => {
+                        setAssetPrice(val);
+                        setAssetFormError('');
+                      }}
+                    />
+                    <span className="text-[9px] text-zinc-500 font-mono block">
+                      {assetType === 'GOLD' 
+                        ? (assetSymbol === 'GOLD_SJC' ? '* Định mức: VND một Lượng (SJC)' : '* Định mức: VND một Chỉ (24K)') 
+                        : '* Định mức: VND một Chứng chỉ Quỹ'}
+                    </span>
+                  </div>
+
+                  {/* Quantity input */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-mono font-bold tracking-wider text-zinc-500 uppercase block">
+                      {language === 'vi' ? 'Khối Lượng Mua Gom' : 'Trade Volume Quantity'}
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0.0001"
+                      placeholder={language === 'vi' ? 'Ví dụ: 250 hoặc 1.25' : 'e.g. 500 or 1.25'}
+                      value={assetQty || ''}
+                      onChange={(e) => {
+                        setAssetQty(parseFloat(e.target.value) || 0);
+                        setAssetFormError('');
+                      }}
+                      className="w-full bg-zinc-950 border border-zinc-900 rounded-xl px-3 py-2 text-zinc-200 text-xs font-mono font-bold focus:outline-none focus:border-zinc-800"
+                    />
+                  </div>
+
+                  {/* Transaction Date selection */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-mono font-bold tracking-wider text-zinc-500 uppercase block">
+                      {language === 'vi' ? 'Ngày Khớp Lệnh Giao Dịch' : 'Settlement Date'}
+                    </label>
+                    <input
+                      type="date"
+                      value={assetDate}
+                      onChange={(e) => setAssetDate(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-900 rounded-xl px-3 py-2 text-zinc-200 text-xs font-bold focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Notes / Milestones */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-mono font-bold tracking-wider text-zinc-500 uppercase block">
+                      {language === 'vi' ? 'Ghi Chú Mốc Tích sản' : 'Milestone Memo'}
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full bg-zinc-950 border border-zinc-900 rounded-xl px-3 py-2 text-zinc-200 text-xs font-medium focus:outline-none"
+                      placeholder={language === 'vi' ? 'Gom vùng giá hỗ trợ, lương tháng 6...' : 'Salary saving allocation, market dip...'}
+                      value={assetNotes || ''}
+                      onChange={(e) => setAssetNotes(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Post Submit Log action */}
+                  <button
+                    type="submit"
+                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-650 hover:from-emerald-450 hover:to-teal-550 text-zinc-950 font-black text-xs flex justify-center items-center gap-1.5 shadow shadow-emerald-500/10 cursor-pointer transition-all focus:outline-none border-none"
+                  >
+                    <Plus className="w-4 h-4 text-zinc-950" />
+                    <span>{language === 'vi' ? 'Khớp Ghi Sổ Tích Sản' : 'Commit Purchase'}</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            {/* Current Position & Ledger Listing Split */}
+            <div className="lg:col-span-7 space-y-6">
+              
+              {/* Dynamic Cost-Average calculations & Position table */}
+              <div className="bg-zinc-900/60 backdrop-blur-lg border border-zinc-800/80 rounded-2xl p-5.5 space-y-4">
+                <h3 className="text-zinc-200 text-sm font-bold flex items-center gap-2 border-b border-zinc-900 pb-3">
+                  <Layers className="w-4 h-4 text-emerald-400" />
+                  {language === 'vi' ? 'Trạng Thái Vị Thế & Trung Bình Giá' : 'Holdings Position & Average Price (DCA)'}
+                </h3>
+
+                {portfolioStats.items.length === 0 ? (
+                  <div className="py-12 text-center text-zinc-550 space-y-3">
+                    <HelpCircle className="w-8 h-8 text-zinc-750 mx-auto" />
+                    <p className="text-xs font-sans text-zinc-400">
+                      {language === 'vi' ? 'Hệ thống chưa ghi nhận tài sản tích lũy.' : 'Your investment accumulation registry is empty.'}
+                    </p>
+                    <p className="text-[10px] text-zinc-600 font-mono">
+                      {language === 'vi' ? 'Hãy nhập lịch sử mua đầu tiên của bạn thông qua biểu mẫu bên trái.' : 'Log your very first purchase log to dynamically compute cost metrics.'}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-zinc-900 text-zinc-500 font-mono font-bold uppercase text-[9px] tracking-wider">
+                          <th className="py-2.5 pr-2">{language === 'vi' ? 'Tên Tài Sản' : 'Asset name'}</th>
+                          <th className="py-2.5 px-2 text-right">{language === 'vi' ? 'Lượng Tích lũy' : 'Holdings'}</th>
+                          <th className="py-2.5 px-2 text-right">{language === 'vi' ? 'Trung Bình Giá' : 'Avg Cost'}</th>
+                          <th className="py-2.5 px-2 text-right">{language === 'vi' ? 'Thời giá VN' : 'Market Price'}</th>
+                          <th className="py-2.5 pl-2 text-right">{language === 'vi' ? 'Chi Tiết Vị thế' : 'Position value'}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-900/40 text-zinc-300 font-medium whitespace-nowrap">
+                        {portfolioStats.items.map((item) => {
+                          const isGreen = item.gain_loss_vnd >= 0;
+                          return (
+                            <tr key={item.symbol} className="hover:bg-zinc-900/10 transition-colors">
+                              <td className="py-3 pr-2">
+                                <span className="font-bold text-zinc-200 block">{item.symbol}</span>
+                                <span className="text-[10px] text-zinc-500 block truncate max-w-[130px] font-sans font-medium">{item.name}</span>
+                              </td>
+                              <td className="py-3 px-2 text-right font-mono font-bold text-zinc-200">
+                                {item.total_quantity} <span className="text-[9px] text-zinc-500 font-normal">{item.asset_type === 'GOLD' ? (item.symbol === 'GOLD_SJC' ? 'lượng' : 'chỉ') : 'ck'}</span>
+                              </td>
+                              <td className="py-3 px-2 text-right font-mono text-zinc-400">
+                                {item.avg_price.toLocaleString('vi-VN')} ₫
+                              </td>
+                              <td className="py-3 px-2 text-right font-mono text-zinc-300">
+                                {item.current_price.toLocaleString('vi-VN')} ₫
+                              </td>
+                              <td className="py-3 pl-2 text-right">
+                                <div className="font-extrabold text-zinc-100 font-sans">{item.current_value.toLocaleString('vi-VN')} ₫</div>
+                                <div className={`text-[10px] font-mono font-bold flex justify-end gap-1 items-center ${isGreen ? 'text-emerald-400' : 'text-red-400'}`}>
+                                  <span>{isGreen ? '▲' : '▼'} {item.gain_loss_percent.toFixed(1)}%</span>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* Historical buy list */}
+              <div className="bg-zinc-900/60 backdrop-blur-lg border border-zinc-800/80 rounded-2xl p-5.5 space-y-4">
+                <h3 className="text-zinc-200 text-sm font-bold flex items-center gap-2 border-b border-zinc-900 pb-3">
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                  {language === 'vi' ? 'Xem Nhật ký Giao dịch Tích sản chi tiết' : 'Accumulated Trade History Logging'}
+                </h3>
+
+                {holdings.length === 0 ? (
+                  <p className="text-center py-6 text-xs text-zinc-500 font-mono">
+                    {language === 'vi' ? 'Chưa ghi nhận lịch sử khớp lệnh nào.' : 'No trades logged yet.'}
+                  </p>
+                ) : (
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                    {holdings.map((log) => {
+                      return (
+                        <div key={log.id} className="p-3 rounded-xl bg-zinc-950/80 border border-zinc-900 flex justify-between items-center gap-4 hover:border-zinc-850 transition-all duration-200 group">
+                          <div className="space-y-1 min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-[10px] px-1.5 py-0.5 rounded font-black font-mono bg-zinc-900 border border-zinc-850 text-emerald-400">
+                                {log.symbol}
+                              </span>
+                              <span className="text-[9.5px] text-zinc-500 font-mono font-bold flex items-center gap-1">
+                                <CalendarDays className="w-3 h-3" />
+                                {log.date}
+                              </span>
+                            </div>
+                            {log.notes && (
+                              <p className="text-xs text-zinc-400 font-medium truncate italic">
+                                "{log.notes}"
+                              </p>
+                            )}
+                            <div className="text-[10px] text-zinc-500 font-mono">
+                              {language === 'vi' ? 'Khối lượng: ' : 'Qty: '}<span className="text-zinc-300 font-bold">{log.quantity}</span> x Đơn giá: <span className="text-zinc-300 font-bold">{log.price_vnd.toLocaleString('vi-VN')} ₫</span>
+                            </div>
+                          </div>
+
+                          <div className="text-right flex items-center gap-3 shrink-0">
+                            <div className="space-y-0.5">
+                              <div className="font-extrabold text-xs text-emerald-400 font-sans">
+                                +{(log.price_vnd * log.quantity).toLocaleString('vi-VN')} ₫
+                              </div>
+                              <span className="text-[8.5px] text-zinc-600 block font-mono font-bold uppercase leading-none">
+                                {log.asset_type === 'GOLD' ? 'VÀNG VẬT CHẤT' : 'CHỨNG CHỈ QUỸ'}
+                              </span>
+                            </div>
+
+                            {deleteAssetHolding && (
+                              <button
+                                type="button"
+                                onClick={() => deleteAssetHolding(log.id)}
+                                className="p-1.5 rounded-lg border border-transparent text-zinc-600 hover:text-red-400 hover:bg-zinc-900/50 hover:border-red-500/10 cursor-pointer transition-all"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

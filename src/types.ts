@@ -110,3 +110,15 @@ export interface Transaction {
   date: string; // YYYY-MM-DD
   created_at: string;
 }
+
+export interface AssetHoldingLog {
+  id: string;
+  user_id: string;
+  asset_type: 'ETF' | 'GOLD';
+  symbol: 'E1VFVN30' | 'FUEVFVND' | 'GOLD_SJC' | 'GOLD_RING' | string;
+  price_vnd: number; // Price per unit
+  quantity: number;  // Number of units/shares
+  date: string;      // YYYY-MM-DD
+  notes: string;
+  created_at: string;
+}

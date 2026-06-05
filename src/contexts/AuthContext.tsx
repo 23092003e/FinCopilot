@@ -33,6 +33,8 @@ interface AuthContextType {
   logout: () => Promise<void>;
   customApiKey: string;
   saveCustomApiKey: (key: string) => void;
+  customFireAntToken: string;
+  saveCustomFireAntToken: (token: string) => void;
   setError: (err: string | null) => void;
 }
 
@@ -49,18 +51,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [error, setErrorState] = useState<string | null>(null);
   const [customApiKey, setCustomApiKey] = useState<string>('');
+  const [customFireAntToken, setCustomFireAntToken] = useState<string>('');
 
   const setError = (err: string | null) => {
     setErrorState(err);
   };
 
-  // Sync custom API key based on logged-in user
+  // Sync custom API key and FireAnt token based on logged-in user
   useEffect(() => {
     if (user) {
       const key = localStorage.getItem(`fincopilot_apikey_${user.uid}`) || '';
+      const faToken = localStorage.getItem(`fincopilot_fireant_token_${user.uid}`) || '';
       setCustomApiKey(key);
+      setCustomFireAntToken(faToken);
     } else {
       setCustomApiKey('');
+      setCustomFireAntToken('');
     }
   }, [user]);
 
@@ -68,6 +74,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (user) {
       localStorage.setItem(`fincopilot_apikey_${user.uid}`, key);
       setCustomApiKey(key);
+    }
+  };
+
+  const saveCustomFireAntToken = (token: string) => {
+    if (user) {
+      localStorage.setItem(`fincopilot_fireant_token_${user.uid}`, token);
+      setCustomFireAntToken(token);
     }
   };
 
@@ -297,6 +310,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logout,
       customApiKey,
       saveCustomApiKey,
+      customFireAntToken,
+      saveCustomFireAntToken,
       setError
     }}>
       {children}

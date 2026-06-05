@@ -18,6 +18,66 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+function robustParsePrice(raw: any, isETF: boolean = false): number | null {
+  if (raw === undefined || raw === null || raw === '') return null;
+  
+  let valStr = String(raw).trim();
+  
+  // Strip common suffixes/units
+  valStr = valStr.replace(/(VND|VNĐ|đ|usd|\$)/gi, '');
+  valStr = valStr.replace(/\s+/g, ''); // strip all spaces
+  
+  // Check if it says "triệu" or similar
+  let multiplier = 1;
+  if (/triệu|trieu|m/i.test(valStr)) {
+    multiplier = 1000000;
+    valStr = valStr.replace(/triệu|trieu|m/i, '');
+  }
+  
+  // Count dots and commas
+  const dotCount = (valStr.match(/\./g) || []).length;
+  const commaCount = (valStr.match(/,/g) || []).length;
+  
+  if (dotCount > 1) {
+    valStr = valStr.replace(/\./g, ''); // "90.500.000" -> "90500000"
+  } else if (commaCount > 1) {
+    valStr = valStr.replace(/,/g, ''); // "90,500,000" -> "90500000"
+  } else if (dotCount === 1 && commaCount === 0) {
+    const parts = valStr.split('.');
+    if (parts[1].length === 3) {
+      valStr = valStr.replace(/\./g, ''); // "35.130" -> "35130"
+    }
+  } else if (commaCount === 1 && dotCount === 0) {
+    const parts = valStr.split(',');
+    if (parts[1].length === 3) {
+      valStr = valStr.replace(/,/g, ''); // "35,130" -> "35130"
+    } else {
+      valStr = valStr.replace(/,/g, '.'); // "35,13" -> "35.13"
+    }
+  }
+  
+  let num = parseFloat(valStr);
+  if (isNaN(num)) return null;
+  
+  num = num * multiplier;
+  
+  // Final logical range scaling
+  if (isETF) {
+    if (num > 0 && num < 100) {
+      num = num * 1000; // e.g. 35.13 -> 35130
+    }
+  } else {
+    // SJC gold prices in VND are typically 50,000,000 - 100,000,000
+    if (num > 5 && num < 200) {
+      num = num * 1000000; // e.g. 90.5 -> 90500000
+    } else if (num >= 50000 && num < 200000) {
+      num = num * 1000; // e.g. 90500 -> 90500000
+    }
+  }
+  
+  return Math.round(num);
+}
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -96,93 +156,199 @@ async function startServer() {
   // Real-time market prices endpoint for ETF and Gold (Vietnamese domestic benchmarks)
   app.get('/api/market-prices', async (req, res) => {
     const customApiKey = req.headers['x-gemini-api-key'] as string | undefined;
+    const customFireAntToken = req.headers['x-fireant-token'] as string | undefined;
 
-    // 10 Requested ETF benchmarks with default base prices
-    let etfMap: Record<string, { name: string; basePrice: number; freq: number }> = {
-      E1VFVN30: { name: "Quỹ ETF VN30 (VFM)", basePrice: 23450, freq: 1.0 },
-      FUEVFVND: { name: "Quỹ ETF DCVFMVN DIAMOND", basePrice: 31200, freq: 0.8 },
-      FUEMAV30: { name: "Quỹ ETF MAFM VN30", basePrice: 15800, freq: 1.2 },
-      FUEKIV30: { name: "Quỹ ETF KIM Growth VN30", basePrice: 12400, freq: 0.9 },
-      FUEVN100: { name: "Quỹ ETF VinaCapital VN100", basePrice: 17100, freq: 1.1 },
-      FUESSV30: { name: "Quỹ ETF SSIAM VN30", basePrice: 16200, freq: 1.05 },
-      FUESSVFL: { name: "Quỹ ETF SSIAM VNFIN LEAD", basePrice: 22900, freq: 1.3 },
-      FUESSV50: { name: "Quỹ ETF SSIAM VN50", basePrice: 18700, freq: 0.75 },
-      FUETFID: { name: "Quỹ ETF IPAAM VN100", basePrice: 14500, freq: 1.15 },
-      FUETCMID: { name: "Quỹ ETF Techcom VN30", basePrice: 13650, freq: 0.85 },
+    // 10 Requested ETF benchmarks
+    let etfMap: Record<string, { name: string; provider: string }> = {
+      E1VFVN30: { name: "Quỹ ETF VN30 (VFM)", provider: 'FireAnt' },
+      FUEVFVND: { name: "Quỹ ETF DCVFMVN DIAMOND", provider: 'FireAnt' },
+      FUEMAV30: { name: "Quỹ ETF MAFM VN30", provider: 'FireAnt' },
+      FUEKIV30: { name: "Quỹ ETF KIM Growth VN30", provider: 'FireAnt' },
+      FUEVN100: { name: "Quỹ ETF VinaCapital VN100", provider: 'FireAnt' },
+      FUESSV30: { name: "Quỹ ETF SSIAM VN30", provider: 'SSI' },
+      FUESSVFL: { name: "Quỹ ETF SSIAM VNFIN LEAD", provider: 'SSI' },
+      FUESSV50: { name: "Quỹ ETF SSIAM VN50", provider: 'SSI' },
+      FUETFID: { name: "Quỹ ETF IPAAM VN100", provider: 'FireAnt' },
+      FUETCMID: { name: "Quỹ ETF Techcom VN30", provider: 'TCBS' },
     };
 
-    // 8 Requested Gold categories (with subcategories) with default base prices
-    let goldMap: Record<string, { name: string; basePrice: number; freq: number }> = {
-      GOLD_TA_9999: { name: "Vàng ta / Vàng nhẫn 9999", basePrice: 8200000, freq: 0.3 },
-      GOLD_24K: { name: "Vàng ta 999 / Vàng 24K", basePrice: 8150000, freq: 0.32 },
-      GOLD_WHITE_10K: { name: "Vàng trắng 10K", basePrice: 3450000, freq: 0.45 },
-      GOLD_WHITE_14K: { name: "Vàng trắng 14K", basePrice: 4850000, freq: 0.42 },
-      GOLD_WHITE_18K: { name: "Vàng trắng 18K", basePrice: 6250000, freq: 0.4 },
-      GOLD_ROSE_10K: { name: "Vàng hồng 10K", basePrice: 3400000, freq: 0.48 },
-      GOLD_ROSE_14K: { name: "Vàng hồng 14K", basePrice: 4800000, freq: 0.44 },
-      GOLD_ROSE_18K: { name: "Vàng hồng 18K", basePrice: 6200000, freq: 0.41 },
-      GOLD_WEST_8K: { name: "Vàng Tây 8K", basePrice: 2700000, freq: 0.52 },
-      GOLD_WEST_9K: { name: "Vàng Tây 9K", basePrice: 3050000, freq: 0.5 },
-      GOLD_WEST_10K: { name: "Vàng Tây 10K", basePrice: 3350000, freq: 0.55 },
-      GOLD_WEST_14K: { name: "Vàng Tây 14K", basePrice: 4750000, freq: 0.46 },
-      GOLD_WEST_18K: { name: "Vàng Tây 18K", basePrice: 6150000, freq: 0.43 },
-      GOLD_ITALY_750: { name: "Vàng Ý 750", basePrice: 5550000, freq: 0.38 },
-      GOLD_ITALY_925: { name: "Vàng bạc Ý 925", basePrice: 180000, freq: 0.6 },
-      GOLD_NON: { name: "Vàng non", basePrice: 2500000, freq: 0.5 },
-      GOLD_MY_KY: { name: "Vàng mỹ ký", basePrice: 50000, freq: 0.1 },
-      
-      GOLD_SJC: { name: "Vàng miếng SJC", basePrice: 90500000, freq: 0.2 },
-      GOLD_RING: { name: "Vàng nhẫn 24K 9999", basePrice: 7850000, freq: 0.3 },
-
-      // Verified Provider Benchmarks (Requested: SJC, DOJI, PNJ, Mi Hồng, Yahoo Finance)
-      GOLD_DOJI: { name: "Vàng miếng ròng DOJI", basePrice: 90300000, freq: 0.21 },
-      GOLD_PNJ: { name: "Vàng nhẫn trơn PNJ 24K", basePrice: 7890000, freq: 0.28 },
-      GOLD_MI_HONG: { name: "Vàng SJC Mi Hồng", basePrice: 89800000, freq: 0.22 },
-      GOLD_WORLD_USD: { name: "Vàng Thế giới (Yahoo Finance GC=F)", basePrice: 2350, freq: 0.15 }
+    // Gold categories list
+    let goldMap: Record<string, { name: string; provider: string }> = {
+      GOLD_TA_9999: { name: "Vàng ta / Vàng nhẫn 9999", provider: 'SJC' },
+      GOLD_24K: { name: "Vàng ta 999 / Vàng 24K", provider: 'SJC' },
+      GOLD_WHITE_10K: { name: "Vàng trắng 10K", provider: 'PNJ' },
+      GOLD_WHITE_14K: { name: "Vàng trắng 14K", provider: 'PNJ' },
+      GOLD_WHITE_18K: { name: "Vàng trắng 18K", provider: 'PNJ' },
+      GOLD_ROSE_10K: { name: "Vàng hồng 10K", provider: 'DOJI' },
+      GOLD_ROSE_14K: { name: "Vàng hồng 14K", provider: 'DOJI' },
+      GOLD_ROSE_18K: { name: "Vàng hồng 18K", provider: 'DOJI' },
+      GOLD_WEST_8K: { name: "Vàng Tây 8K", provider: 'SJC' },
+      GOLD_WEST_9K: { name: "Vàng Tây 9K", provider: 'SJC' },
+      GOLD_WEST_10K: { name: "Vàng Tây 10K", provider: 'SJC' },
+      GOLD_WEST_14K: { name: "Vàng Tây 14K", provider: 'SJC' },
+      GOLD_WEST_18K: { name: "Vàng Tây 18K", provider: 'SJC' },
+      GOLD_ITALY_750: { name: "Vàng Ý 750", provider: 'PNJ' },
+      GOLD_ITALY_925: { name: "Vàng bạc Ý 925", provider: 'PNJ' },
+      GOLD_NON: { name: "Vàng non", provider: 'SJC' },
+      GOLD_MY_KY: { name: "Vàng mỹ ký", provider: 'SJC' },
+      GOLD_SJC: { name: "Vàng miếng SJC", provider: 'SJC' },
+      GOLD_RING: { name: "Vàng nhẫn 24K 9999", provider: 'SJC' },
+      GOLD_DOJI: { name: "Vàng miếng ròng DOJI", provider: 'DOJI' },
+      GOLD_PNJ: { name: "Vàng nhẫn trơn PNJ 24K", provider: 'PNJ' },
+      GOLD_MI_HONG: { name: "Vàng SJC Mi Hồng", provider: 'Mi Hồng' },
+      GOLD_WORLD_USD: { name: "Vàng Thế giới (Yahoo Finance GC=F)", provider: 'Yahoo Finance' }
     };
 
     let fetchedData: any = null;
-    let dataSource = 'simulated_waves';
+    let dataSource = 'real_time_gemini';
+
+    // Direct FireAnt fetch if token is provided
+    let fireAntData: Record<string, { price: number; change: number }> = {};
+    let fireAntSuccess = false;
+    
+    if (customFireAntToken && customFireAntToken.trim()) {
+      console.log('[Direct FireAnt] Detected custom FireAnt Bearer Token; executing direct queries...');
+      const cleanToken = customFireAntToken.trim();
+      const headers = {
+        'Authorization': `Bearer ${cleanToken}`,
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://fireant.vn/',
+        'Origin': 'https://fireant.vn'
+      };
+
+      const symbolsToQuery = Object.keys(etfMap);
+      
+      try {
+        const fetchPromises = symbolsToQuery.map(async (symbol) => {
+          try {
+            const url = `https://api.fireant.vn/symbols/${symbol}`;
+            const res = await fetch(url, { headers });
+            if (res.ok) {
+              const payload = await res.json();
+              let obj = payload;
+              if (payload && payload.data) {
+                obj = payload.data;
+              }
+              
+              let price: number | null = null;
+              const priceKeys = ['price', 'lastPrice', 'close', 'closePrice', 'currentPrice', 'matchPrice', 'last', 'value'];
+              for (const k of priceKeys) {
+                if (obj[k] !== undefined && obj[k] !== null) {
+                  const num = Number(obj[k]);
+                  if (!isNaN(num) && num > 0) {
+                    price = num;
+                    break;
+                  }
+                }
+              }
+
+              let change: number | null = null;
+              const changeKeys = ['change', 'changePercent', 'percentChange', 'pctChange', 'change_percent', 'priceChangePercent'];
+              for (const k of changeKeys) {
+                if (obj[k] !== undefined && obj[k] !== null) {
+                  const num = Number(obj[k]);
+                  if (!isNaN(num)) {
+                    change = num;
+                    break;
+                  }
+                }
+              }
+
+              if (price !== null) {
+                return { symbol, price: Math.round(price), change: change || 0, success: true };
+              }
+            } else {
+              console.warn(`[Direct FireAnt] Symbol ${symbol} query returned status ${res.status}`);
+            }
+          } catch (err: any) {
+            console.warn(`[Direct FireAnt] Failed to fetch symbol ${symbol}:`, err.message);
+          }
+          return { symbol, price: 0, change: 0, success: false };
+        });
+
+        const results = await Promise.all(fetchPromises);
+        results.forEach((r) => {
+          if (r.success) {
+            fireAntData[r.symbol] = { price: r.price, change: r.change };
+            fireAntSuccess = true;
+          }
+        });
+
+        if (fireAntSuccess) {
+          console.log('[Direct FireAnt] Succesfully fetched live values directly from FireAnt API!');
+        }
+      } catch (err: any) {
+        console.warn('[Direct FireAnt] FireAnt direct fetch block error:', err.message);
+      }
+    }
 
     // Try live fetch via Google Search Grounding if API key is present
     const apiKeyToUse = customApiKey?.trim() || process.env.GEMINI_API_KEY?.trim();
     if (apiKeyToUse) {
       try {
         const ai = getGeminiClient(apiKeyToUse);
-        const prompt = `Hãy sử dụng dữ liệu Google Tìm kiếm thời gian thực để tra cứu chi tiết giá tài chính hôm nay tại Việt Nam. Vui lòng lấy số thực tế mới nhất, không dùng các khoảng ví dụ cũ trong câu hỏi làm giới hạn:
-1. Giá bán ra của Vàng miếng SJC (VND/lượng) tại Công ty SJC.
-2. Giá bán ra của Vàng miếng DOJI (VND/lượng) tại Tập đoàn DOJI.
-3. Giá bán ra của Vàng nhẫn PNJ 24K (VND/chỉ hoặc quy đổi ra VND/lượng) của PNJ.
-4. Giá bán ra của Vàng Mi Hồng (VND/lượng) tại Công ty Vàng Mi Hồng.
-5. Tỷ giá USD/VND bán ra hiện hành tại Vietcombank.
-6. Giá vàng thế giới liên tục trên sàn Yahoo Finance mã sản phẩm GC=F (USD/troy ounce).
-7. Giá đóng cửa khớp lệnh mới nhất của các Chứng chỉ quỹ sau dựa trên bảng giá sàn HOSE trên bảng điện SSI, TCBS hoặc FireAnt (LƯU Ý: giá hiển thị trên sàn thường chia cho 1,000, ví dụ: 23.45 tức là 23,450 VND/ccq, và nếu 35.39 tức là 35,390 VND/ccq. Bạn phải nhân 1,000 để điền số VND chính xác vào JSON):
-  - E1VFVN30 (VN30 ETF)
-  - FUEVFVND (Diamond ETF)
-  - FUESSVFL (FinLeads ETF)
+        const prompt = `Hãy sử dụng dữ liệu Google Tìm kiếm thời gian thực để tra cứu chi tiết giá tài chính hôm nay tại Việt Nam. Vui lòng lấy số thực tế mới nhất từ bảng điện chứng khoán, FireAnt, HOSE và các nhà cung cấp vàng chính thức (SJC, DOJI, PNJ, Mi Hồng).
 
-Đồng thời tra cứu % thay đổi trong phiên hôm nay (ví dụ: +0.25 hoặc -1.1) của từng loại tài sản trên.
+Hãy tra cứu giá đóng cửa khớp lệnh hoặc giá giao dịch mới nhất của các Chứng chỉ quỹ ETF sau trên HOSE (LƯU Ý: giá hiển thị trên bảng điện thường chia cho 1,000, ví dụ: 35.39 tức là 35,390 đ/ccq. Bạn PHẢI nhân 1,000 để điền số VND chính xác vào JSON, tuyệt đối không điền 35.39 làm giá VND):
+1. E1VFVN30 (VN30 ETF) -> Ví dụ giá hiện tại khoảng 35,390 VND. 
+2. FUEVFVND (Diamond ETF)
+3. FUESSVFL (FinLeads ETF)
+4. FUEMAV30 (MAFM VN30 ETF)
+5. FUEKIV30 (KIM Growth VN30 ETF)
+6. FUEVN100 (VinaCapital VN100 ETF)
+7. FUESSV30 (SSIAM VN30 ETF)
+8. FUESSV50 (SSIAM VN50 ETF)
+9. FUETFID (IPAAM VN100 ETF)
+10. FUETCMID (Techcom VN30 ETF)
+
+Đồng thời tra cứu giá bán ra hiện tại (đơn vị: VND/lượng) cho:
+1. Vàng miếng SJC tại Công ty SJC (GOLD_SJC)
+2. Vàng miếng DOJI tại Tập đoàn DOJI (GOLD_DOJI)
+3. Vàng trơn nhẫn 24K PNJ tại PNJ (GOLD_PNJ)
+4. Vàng miếng SJC Mi Hồng tại Mi Hồng (GOLD_MI_HONG)
+5. Vàng nhẫn tròn trơn 9999 SJC / bảo tín minh châu (GOLD_RING)
+6. Vàng Thế giới liên tục trên Yahoo Finance GC=F (GOLD_WORLD_USD) (đơn vị: USD/troy ounce)
+7. Tỷ giá bán ra USD/VND hiện hành tại Vietcombank (USD_VND_RATE)
+
+Hãy tìm thêm thông tin % thay đổi ngày hôm nay cho các mã tài sản trên (ví dụ: +0.15 hoặc -0.5). Nếu không thể tìm thấy thông tin chính xác của bất kỳ sản phẩm nào, hãy điền giá trị null cho thuộc tính đó.
 
 Trả về kết quả dưới dạng JSON thuần túy có cấu trúc chính xác sau, không có phản hồi bằng lời, không kèm markdown codeblocks:
 {
-  "GOLD_SJC": <số, ví dụ: 90500000>,
-  "GOLD_SJC_change": <số đại diện cho %, ví dụ: 0.15>,
-  "GOLD_DOJI": <số, ví dụ: 90300000>,
-  "GOLD_DOJI_change": <số, ví dụ: -0.1>,
-  "GOLD_PNJ": <số giá lượng, ví dụ: 78900000>,
-  "GOLD_PNJ_change": <số, ví dụ: 0.25>,
-  "GOLD_MI_HONG": <số, ví dụ: 89800000>,
-  "GOLD_MI_HONG_change": <số, ví dụ: 0.0>,
-  "GOLD_WORLD_USD": <số, ví dụ: 2350.5>,
-  "GOLD_WORLD_USD_change": <số, ví dụ: 1.22>,
-  "USD_VND_RATE": <số, ví dụ: 25420>,
-  "USD_VND_RATE_change": <số, ví dụ: 0.05>,
-  "E1VFVN30": <số, ví dụ: 35390>,
-  "E1VFVN30_change": <số, ví dụ: -0.32>,
-  "FUEVFVND": <số, ví dụ: 35390>,
-  "FUEVFVND_change": <số, ví dụ: 0.55>,
-  "FUESSVFL": <số, ví dụ: 22900>,
-  "FUESSVFL_change": <số, ví dụ: -0.12>
+  "GOLD_SJC": <số VND/lượng, ví dụ: 90500000>,
+  "GOLD_SJC_change": <số %, ví dụ: 0.15>,
+  "GOLD_DOJI": <số VND/lượng, ví dụ: 90300000>,
+  "GOLD_DOJI_change": <số %, ví dụ: -0.1>,
+  "GOLD_PNJ": <số VND/lượng, ví dụ: 78900000>,
+  "GOLD_PNJ_change": <số %, ví dụ: 0.25>,
+  "GOLD_MI_HONG": <số VND/lượng, ví dụ: 89800000>,
+  "GOLD_MI_HONG_change": <số %, ví dụ: 0.0>,
+  "GOLD_RING": <số VND/lượng hoặc quy đổi ra lượng, ví dụ: 78500000>,
+  "GOLD_RING_change": <số %, ví dụ: 0.3>,
+  "GOLD_WORLD_USD": <số USD/oz, ví dụ: 2350.5>,
+  "GOLD_WORLD_USD_change": <số %, ví dụ: 1.22>,
+  "USD_VND_RATE": <số tỷ giá, ví dụ: 25420>,
+  "USD_VND_RATE_change": <số %, ví dụ: 0.05>,
+  
+  "E1VFVN30": <số VND/ccq, ví dụ: 35390>,
+  "E1VFVN30_change": <số %, ví dụ: -0.32>,
+  "FUEVFVND": <số VND/ccq, ví dụ: 33450>,
+  "FUEVFVND_change": <số %, ví dụ: 0.5>,
+  "FUESSVFL": <số VND/ccq, ví dụ: 22900>,
+  "FUESSVFL_change": <số %, ví dụ: -0.1>,
+  "FUEMAV30": <số VND/ccq hoặc null>,
+  "FUEMAV30_change": <số % hoặc null>,
+  "FUEKIV30": <số VND/ccq hoặc null>,
+  "FUEKIV30_change": <số % hoặc null>,
+  "FUEVN100": <số VND/ccq hoặc null>,
+  "FUEVN100_change": <số % hoặc null>,
+  "FUESSV30": <số VND/ccq hoặc null>,
+  "FUESSV30_change": <số % hoặc null>,
+  "FUESSV50": <số VND/ccq hoặc null>,
+  "FUESSV50_change": <số % hoặc null>,
+  "FUETFID": <số VND/ccq hoặc null>,
+  "FUETFID_change": <số % hoặc null>,
+  "FUETCMID": <số VND/ccq hoặc null>,
+  "FUETCMID_change": <số % hoặc null>
 }`;
 
         const response = await ai.models.generateContent({
@@ -198,173 +364,148 @@ Trả về kết quả dưới dạng JSON thuần túy có cấu trúc chính x
         const cleanJson = textResponse.replace(/```json/gi, '').replace(/```/g, '').trim();
         const parsed = JSON.parse(cleanJson);
         
-        // Basic validation of keys
-        if (parsed && Number(parsed.GOLD_SJC) > 50000000 && Number(parsed.E1VFVN30) > 10000) {
-          fetchedData = parsed;
-          dataSource = 'real_time_gemini';
-          console.log('[FinCopilot] Successfully fetched real-time market data with customizable providers!');
+        if (parsed && typeof parsed === 'object') {
+          const normalized: Record<string, any> = {};
+          Object.keys(parsed).forEach((key) => {
+            if (key.endsWith('_change')) {
+              normalized[key] = parsed[key] !== null && parsed[key] !== undefined ? Number(parsed[key]) : null;
+            } else {
+              const isETF = !key.startsWith('GOLD_') && key !== 'USD_VND_RATE';
+              normalized[key] = robustParsePrice(parsed[key], isETF);
+            }
+          });
+          
+          // Validation: must have some valid ETF or Gold values
+          const hasValidETF = ['E1VFVN30', 'FUEVFVND', 'FUESSVFL'].some(sym => normalized[sym] && normalized[sym] > 5000);
+          const hasValidGold = ['GOLD_SJC', 'GOLD_DOJI', 'GOLD_PNJ', 'GOLD_RING'].some(sym => normalized[sym] && normalized[sym] > 10000000);
+          
+          if (hasValidETF || hasValidGold) {
+            fetchedData = normalized;
+            console.log('[FinCopilot] Successfully fetched and robustly normalized real-time market data via Google Grounding search!');
+          } else {
+            console.warn('[FinCopilot] Parsed market data did not contain valid ETF or Gold criteria:', JSON.stringify(normalized));
+          }
         }
       } catch (err: any) {
         console.warn('Gemini Search Grounding market fetch failed:', err.message);
       }
     }
 
-    const timeSeed = Date.now() / 15000; // Fluctuates slightly every 15 seconds
-    const getWave = (freq: number) => {
-      return Math.sin(timeSeed * freq) * 0.003 + Math.cos(timeSeed * (freq / 1.7)) * 0.002;
-    };
+    // Since simulation / local waves are completely removed as per instructions:
+    // If fetchedData is not available, all prices are null
+    if (!fetchedData) {
+      dataSource = 'not_available';
+    }
 
     const data: Record<string, any> = {};
 
-    // 1. Calculate and map ETFs
-    let etfOffsetPercent = 0;
-    if (fetchedData) {
-      etfMap.E1VFVN30.basePrice = Math.round(Number(fetchedData.E1VFVN30));
-      etfMap.FUEVFVND.basePrice = Math.round(Number(fetchedData.FUEVFVND));
-      etfMap.FUESSVFL.basePrice = Math.round(Number(fetchedData.FUESSVFL));
-      
-      const originalE1 = 23450;
-      etfOffsetPercent = (Number(fetchedData.E1VFVN30) - originalE1) / originalE1;
-    }
-
+    // 1. Map ETFs
     Object.entries(etfMap).forEach(([symbol, item]) => {
-      let wave = getWave(item.freq);
-      let calculatedPrice = item.basePrice;
-      let change_percent = Number(((wave + (fetchedData ? etfOffsetPercent : 0)) * 100).toFixed(2));
-      
-      if (fetchedData) {
-        if (symbol === 'E1VFVN30') {
-          calculatedPrice = Math.round(Number(fetchedData.E1VFVN30));
-          change_percent = Number(fetchedData.E1VFVN30_change || 0);
-          wave = 0; // Freeze waves for real-time accurate data
-        } else if (symbol === 'FUEVFVND') {
-          calculatedPrice = Math.round(Number(fetchedData.FUEVFVND));
-          change_percent = Number(fetchedData.FUEVFVND_change || 0);
-          wave = 0; // Freeze waves for real-time accurate data
-        } else if (symbol === 'FUESSVFL') {
-          calculatedPrice = Math.round(Number(fetchedData.FUESSVFL));
-          change_percent = Number(fetchedData.FUESSVFL_change || 0);
-          wave = 0; // Freeze waves for real-time accurate data
-        } else {
-          calculatedPrice = Math.round(item.basePrice * (1 + etfOffsetPercent));
-        }
+      let livePrice: number | null = null;
+      let change_percent: number | null = null;
+      let symbolSource = dataSource;
+
+      if (fireAntSuccess && fireAntData[symbol]) {
+        livePrice = fireAntData[symbol].price;
+        change_percent = fireAntData[symbol].change;
+        symbolSource = 'direct_fireant';
+      } else if (fetchedData && fetchedData[symbol] !== undefined && fetchedData[symbol] !== null) {
+        livePrice = Math.round(Number(fetchedData[symbol]));
+        change_percent = fetchedData[`${symbol}_change`] !== undefined && fetchedData[`${symbol}_change`] !== null
+          ? Number(fetchedData[`${symbol}_change`])
+          : null;
       }
 
       data[symbol] = {
         symbol,
         name: item.name,
-        price_vnd: Math.round(calculatedPrice * (1 + wave)),
+        price_vnd: livePrice,
         change_percent,
-        updated_at: new Date().toISOString(),
-        data_source: dataSource,
-        provider: ['FUESSVFL', 'FUESSV30', 'FUESSV50'].includes(symbol) ? 'SSI' : symbol === 'FUETCMID' ? 'TCBS' : 'FireAnt'
+        updated_at: (fireAntSuccess && fireAntData[symbol]) || fetchedData ? new Date().toISOString() : null,
+        data_source: symbolSource,
+        provider: item.provider
       };
     });
 
-    // 2. Calculate and map Gold Categories
-    let goldRingBasePerLuong = 78500000;
-    let goldSjcBasePerLuong = 90500000;
-    let goldDojiBasePerLuong = 90300000;
-    let goldMiHongBasePerLuong = 89800000;
-    let goldPnjBasePerLuong = 78900000;
-    let goldWorldUsd = 2350;
-    let usdVndRate = 25420;
-    let goldOffsetPercent = 0;
-
-    if (fetchedData) {
-      goldSjcBasePerLuong = Math.round(Number(fetchedData.GOLD_SJC));
-      goldDojiBasePerLuong = Math.round(Number(fetchedData.GOLD_DOJI || 90300000));
-      goldMiHongBasePerLuong = Math.round(Number(fetchedData.GOLD_MI_HONG || 89800000));
-      usdVndRate = Math.round(Number(fetchedData.USD_VND_RATE || 25420));
-      goldWorldUsd = Number(fetchedData.GOLD_WORLD_USD || 2350);
-
-      const rawPnj = Math.round(Number(fetchedData.GOLD_PNJ || 7890000));
-      goldPnjBasePerLuong = rawPnj < 15000000 ? rawPnj * 10 : rawPnj;
-
-      goldMap.GOLD_SJC.basePrice = goldSjcBasePerLuong;
-      goldMap.GOLD_DOJI.basePrice = goldDojiBasePerLuong;
-      goldMap.GOLD_MI_HONG.basePrice = goldMiHongBasePerLuong;
-      goldMap.GOLD_PNJ.basePrice = Math.round(goldPnjBasePerLuong / 10);
-      goldMap.GOLD_WORLD_USD.basePrice = goldWorldUsd;
-
-      const rawRing = Math.round(Number(fetchedData.GOLD_RING || fetchedData.GOLD_TA_9999 || 7850000));
-      if (rawRing < 15000000) {
-        goldRingBasePerLuong = rawRing * 10;
-      } else {
-        goldRingBasePerLuong = rawRing;
-      }
-      goldMap.GOLD_RING.basePrice = Math.round(goldRingBasePerLuong / 10);
-
-      const originalSjc = 90500000;
-      goldOffsetPercent = (goldSjcBasePerLuong - originalSjc) / originalSjc;
-    }
-
+    // 2. Map Gold Categories
     Object.entries(goldMap).forEach(([symbol, item]) => {
-      let wave = getWave(item.freq);
-      let calculatedPrice = item.basePrice;
-      let change_percent = Number(((wave + (fetchedData ? goldOffsetPercent : 0)) * 100).toFixed(2));
-
-      let provider = 'SJC';
-      if (symbol.includes('DOJI')) provider = 'DOJI';
-      else if (symbol.includes('PNJ')) provider = 'PNJ';
-      else if (symbol.includes('MI_HONG')) provider = 'Mi Hồng';
-      else if (symbol.includes('WORLD')) provider = 'Yahoo Finance';
+      let livePrice: number | null = null;
+      let change_percent: number | null = null;
 
       if (fetchedData) {
         if (symbol === 'GOLD_SJC') {
-          calculatedPrice = goldSjcBasePerLuong;
-          change_percent = Number(fetchedData.GOLD_SJC_change || (goldOffsetPercent * 100).toFixed(2));
-          wave = 0; // Freeze waves for real-time accurate data
+          livePrice = fetchedData.GOLD_SJC ? Math.round(Number(fetchedData.GOLD_SJC)) : null;
+          change_percent = fetchedData.GOLD_SJC_change !== undefined && fetchedData.GOLD_SJC_change !== null ? Number(fetchedData.GOLD_SJC_change) : null;
         } else if (symbol === 'GOLD_DOJI') {
-          calculatedPrice = goldDojiBasePerLuong;
-          change_percent = Number(fetchedData.GOLD_DOJI_change || 0);
-          wave = 0; // Freeze waves for real-time accurate data
+          livePrice = fetchedData.GOLD_DOJI ? Math.round(Number(fetchedData.GOLD_DOJI)) : null;
+          change_percent = fetchedData.GOLD_DOJI_change !== undefined && fetchedData.GOLD_DOJI_change !== null ? Number(fetchedData.GOLD_DOJI_change) : null;
         } else if (symbol === 'GOLD_MI_HONG') {
-          calculatedPrice = goldMiHongBasePerLuong;
-          change_percent = Number(fetchedData.GOLD_MI_HONG_change || 0);
-          wave = 0; // Freeze waves for real-time accurate data
+          livePrice = fetchedData.GOLD_MI_HONG ? Math.round(Number(fetchedData.GOLD_MI_HONG)) : null;
+          change_percent = fetchedData.GOLD_MI_HONG_change !== undefined && fetchedData.GOLD_MI_HONG_change !== null ? Number(fetchedData.GOLD_MI_HONG_change) : null;
         } else if (symbol === 'GOLD_WORLD_USD') {
-          calculatedPrice = goldWorldUsd;
-          change_percent = Number(fetchedData.GOLD_WORLD_USD_change || 0);
-          wave = 0; // Freeze waves for real-time accurate data
+          livePrice = fetchedData.GOLD_WORLD_USD ? Number(fetchedData.GOLD_WORLD_USD) : null;
+          change_percent = fetchedData.GOLD_WORLD_USD_change !== undefined && fetchedData.GOLD_WORLD_USD_change !== null ? Number(fetchedData.GOLD_WORLD_USD_change) : null;
         } else if (symbol === 'GOLD_RING' || symbol === 'GOLD_TA_9999') {
-          calculatedPrice = Math.round(goldRingBasePerLuong / 10);
-          change_percent = Number(fetchedData.GOLD_RING_change || fetchedData.GOLD_TA_9999_change || (goldOffsetPercent * 100).toFixed(2));
-          wave = 0; // Freeze waves for real-time accurate data
+          const rawRingPrice = fetchedData.GOLD_RING || fetchedData.GOLD_TA_9999;
+          if (rawRingPrice) {
+            const rawVal = Number(rawRingPrice);
+            if (symbol === 'GOLD_TA_9999') {
+              livePrice = rawVal > 15000000 ? Math.round(rawVal / 10) : Math.round(rawVal);
+            } else {
+              livePrice = rawVal < 15000000 ? Math.round(rawVal * 10) : Math.round(rawVal);
+            }
+          }
+          change_percent = fetchedData.GOLD_RING_change !== undefined && fetchedData.GOLD_RING_change !== null ? Number(fetchedData.GOLD_RING_change) : null;
         } else if (symbol === 'GOLD_PNJ') {
-          calculatedPrice = Math.round(goldPnjBasePerLuong / 10);
-          change_percent = Number(fetchedData.GOLD_PNJ_change || 0);
-          wave = 0; // Freeze waves for real-time accurate data
+          const rawPnj = fetchedData.GOLD_PNJ;
+          if (rawPnj) {
+            const rawVal = Number(rawPnj);
+            livePrice = rawVal < 15000000 ? Math.round(rawVal * 10) : Math.round(rawVal);
+          }
+          change_percent = fetchedData.GOLD_PNJ_change !== undefined && fetchedData.GOLD_PNJ_change !== null ? Number(fetchedData.GOLD_PNJ_change) : null;
         } else if (symbol === 'GOLD_24K') {
-          calculatedPrice = Math.round((goldRingBasePerLuong * 0.994) / 10);
-          change_percent = Number(fetchedData.GOLD_PNJ_change || (goldOffsetPercent * 100).toFixed(2));
-          wave = 0; // Freeze waves for real-time accurate data
-        } else {
-          calculatedPrice = Math.round(item.basePrice * (1 + goldOffsetPercent));
+          const rawRingPrice = fetchedData.GOLD_RING || fetchedData.GOLD_TA_9999;
+          if (rawRingPrice) {
+            const lPrice = Number(rawRingPrice) < 15000000 ? Number(rawRingPrice) * 10 : Number(rawRingPrice);
+            livePrice = Math.round(lPrice * 0.994);
+          }
         }
       }
 
       data[symbol] = {
         symbol,
         name: item.name,
-        price_vnd: symbol === 'GOLD_WORLD_USD' ? calculatedPrice : Math.round(calculatedPrice * (1 + wave)),
+        price_vnd: livePrice,
         change_percent,
-        updated_at: new Date().toISOString(),
+        updated_at: fetchedData ? new Date().toISOString() : null,
         data_source: dataSource,
-        provider
+        provider: item.provider
       };
     });
 
-    // Compute additional domestic-world gold price gap metrics (highly valuable for Vietnamese investors!)
-    const worldGoldVndPerLuong = Math.round((goldWorldUsd * usdVndRate) / 0.8294);
-    const goldGapVnd = goldSjcBasePerLuong - worldGoldVndPerLuong;
+    // Compute additional domestic-world gold price gap metrics
+    const usdVndRate = fetchedData && fetchedData.USD_VND_RATE ? Math.round(Number(fetchedData.USD_VND_RATE)) : null;
+    const goldWorldUsd = fetchedData && fetchedData.GOLD_WORLD_USD ? Number(fetchedData.GOLD_WORLD_USD) : null;
+    const goldSjcBasePerLuong = fetchedData && fetchedData.GOLD_SJC ? Math.round(Number(fetchedData.GOLD_SJC)) : null;
+
+    let worldGoldVndPerLuong = null;
+    let goldGapVnd = null;
+
+    if (goldWorldUsd && usdVndRate) {
+      worldGoldVndPerLuong = Math.round((goldWorldUsd * usdVndRate) / 0.8294);
+      if (goldSjcBasePerLuong) {
+        goldGapVnd = goldSjcBasePerLuong - worldGoldVndPerLuong;
+      }
+    }
 
     data['USD_VND'] = {
       symbol: 'USD_VND',
       name: 'Tỷ giá USD/VND',
       price_vnd: usdVndRate,
-      change_percent: fetchedData ? Number(fetchedData.USD_VND_RATE_change || 0) : 0.12,
-      updated_at: new Date().toISOString(),
+      change_percent: fetchedData && fetchedData.USD_VND_RATE_change !== undefined && fetchedData.USD_VND_RATE_change !== null
+        ? Number(fetchedData.USD_VND_RATE_change)
+        : null,
+      updated_at: fetchedData ? new Date().toISOString() : null,
       data_source: dataSource,
       provider: 'Vietcombank / SBV'
     };
@@ -375,7 +516,7 @@ Trả về kết quả dưới dạng JSON thuần túy có cấu trúc chính x
       domestic_sjc_per_luong: goldSjcBasePerLuong,
       gap_vnd_per_luong: goldGapVnd,
       usd_vnd_rate: usdVndRate,
-      updated_at: new Date().toISOString(),
+      updated_at: fetchedData ? new Date().toISOString() : null,
       providers_contacted: {
         etf: ['FireAnt', 'SSI', 'TCBS'],
         gold_domestic: ['SJC', 'DOJI', 'PNJ', 'Mi Hồng'],

@@ -48,7 +48,14 @@ export function Dashboard({
   useEffect(() => {
     const fetchPrices = async () => {
       try {
-        const res = await fetch('/api/market-prices');
+        const apiKey = localStorage.getItem(`fincopilot_apikey_${profile?.id}`) || '';
+        const faToken = localStorage.getItem(`fincopilot_fireant_token_${profile?.id}`) || '';
+        const res = await fetch('/api/market-prices', {
+          headers: {
+            'x-gemini-api-key': apiKey,
+            'x-fireant-token': faToken
+          }
+        });
         if (res.ok) {
           const data = await res.json();
           setMarketPrices(data);
@@ -60,7 +67,7 @@ export function Dashboard({
     fetchPrices();
     const interval = setInterval(fetchPrices, 15000);
     return () => clearInterval(interval);
-  }, []);
+  }, [profile?.id]);
 
   // Compute portfolio's current total asset valuation
   const portfolioValue = useMemo(() => {

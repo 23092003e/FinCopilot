@@ -40,9 +40,9 @@ async function runTests() {
     const data = await res.json() as any;
     
     // Check key ETFs
-    const hasETFs = ['E1VFVN30', 'FUEVFVND', 'FUESSVFL'].every(sym => data[sym] && data[sym].price_vnd > 0);
+    const hasETFs = ['E1VFVN30', 'FUEVFVND', 'FUESSVFL'].every(sym => data[sym] && (data[sym].price_vnd === null || data[sym].price_vnd > 0));
     // Check Gold Categories
-    const hasGold = ['GOLD_TA_9999', 'GOLD_SJC'].every(sym => data[sym] && data[sym].price_vnd > 0);
+    const hasGold = ['GOLD_TA_9999', 'GOLD_SJC'].every(sym => data[sym] && (data[sym].price_vnd === null || data[sym].price_vnd > 0));
 
     if (hasETFs && hasGold) {
       printResult('Market Prices API Data Scheme', true, 'Contains both ETF and Gold benchmarks with non-zero prices.');

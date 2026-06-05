@@ -18,7 +18,7 @@ interface SettingsProps {
 }
 
 export function Settings({ profile, updateProfile, resetAllData }: SettingsProps) {
-  const { customApiKey, saveCustomApiKey } = useAuth();
+  const { customApiKey, saveCustomApiKey, customFireAntToken, saveCustomFireAntToken } = useAuth();
   const { language, t } = useUI();
   
   const [name, setName] = useState(profile.full_name || '');
@@ -37,6 +37,11 @@ export function Settings({ profile, updateProfile, resetAllData }: SettingsProps
   const [showKey, setShowKey] = useState(false);
   const [isApiKeySaved, setIsApiKeySaved] = useState(false);
 
+  // FireAnt token states
+  const [faToken, setFaToken] = useState(customFireAntToken || '');
+  const [showFaToken, setShowFaToken] = useState(false);
+  const [isFaTokenSaved, setIsFaTokenSaved] = useState(false);
+
   const CAREERS = [
     { value: 'software', label_vi: 'Phát triển Phần mềm (Software)', label_en: 'Software Development' },
     { value: 'ai_ml', label_vi: 'Trí tuệ nhân tạo (AI / ML)', label_en: 'AI / Machine Learning' },
@@ -50,6 +55,10 @@ export function Settings({ profile, updateProfile, resetAllData }: SettingsProps
   useEffect(() => {
     setApiKey(customApiKey);
   }, [customApiKey]);
+
+  useEffect(() => {
+    setFaToken(customFireAntToken || '');
+  }, [customFireAntToken]);
 
   // Keep form fields in sync with database-level changes or demo profile resets
   useEffect(() => {
@@ -304,6 +313,76 @@ export function Settings({ profile, updateProfile, resetAllData }: SettingsProps
           
           <p className="text-[10px] text-zinc-500 leading-normal italic font-sans pl-1">
             {t('api.disclaimer')}
+          </p>
+        </div>
+      </div>
+
+      {/* FireAnt Integration Configuration Panel */}
+      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 space-y-4 shadow-xl text-xs transition-colors duration-200">
+        <h3 className="text-zinc-200 text-sm font-bold border-b border-zinc-850 pb-2.5 flex items-center gap-1.5">
+          <Key className="w-4 h-4 text-emerald-400" />
+          {language === 'vi' ? 'Kết nối trực tiếp sàn FireAnt' : 'Direct FireAnt Market API Integration'}
+        </h3>
+        
+        <p className="text-zinc-400 leading-relaxed font-sans font-medium w-full text-justify">
+          {language === 'vi' 
+            ? 'FinCopilot hỗ trợ kết nối trực tiếp với cổng dữ liệu FireAnt thông qua Bearer Token cá nhân của bạn. Khi kích hoạt chế độ này, giá và chỉ số thay đổi của các CCQ ETF HOSE được gửi trực tiếp từ máy chủ FireAnt API mà không qua các công cụ tìm kiếm gián tiếp.' 
+            : 'FinCopilot supports direct connectivity to the FireAnt API gateway using your private Bearer Token. When active, HOSE ETF benchmark quotes are queried directly from FireAnt instead of using search query grounding.'}
+        </p>
+
+        <div className="space-y-2.5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <label htmlFor="set_fa_token" className="block text-zinc-400 font-bold uppercase tracking-wider">
+              {language === 'vi' ? 'Mã xác thực FireAnt Bearer Token' : 'FireAnt Authorization Bearer Token'}
+            </label>
+            <span className="font-mono text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0 max-w-max bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              {customFireAntToken ? (language === 'vi' ? 'Kết nối Trực tiếp' : 'Direct Link Active') : (language === 'vi' ? 'Mặc định (Tìm kiếm)' : 'Default (Search Mode)')}
+            </span>
+          </div>
+
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <input
+                id="set_fa_token"
+                type={showFaToken ? 'text' : 'password'}
+                value={faToken}
+                onChange={(e) => setFaToken(e.target.value)}
+                placeholder={language === 'vi' ? 'Nhập FireAnt Bearer Token...' : 'Enter FireAnt Bearer Token...'}
+                className="w-full bg-zinc-950 border border-zinc-850 text-zinc-100 text-xs rounded p-2.5 focus:outline-none focus:border-emerald-500 pr-10 font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => setShowFaToken(!showFaToken)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-zinc-500 hover:text-zinc-400 cursor-pointer"
+              >
+                {showFaToken ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                saveCustomFireAntToken(faToken);
+                setIsFaTokenSaved(true);
+                setTimeout(() => setIsFaTokenSaved(false), 2000);
+              }}
+              className="py-2.5 px-6 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold rounded text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+            >
+              {isFaTokenSaved ? (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{language === 'vi' ? 'Lưu thành công!' : 'Saved!'}</span>
+                </>
+              ) : (
+                <span>{language === 'vi' ? 'Lưu' : 'Save'}</span>
+              )}
+            </button>
+          </div>
+          
+          <p className="text-[10px] text-zinc-500 leading-normal italic font-sans pl-1">
+            {language === 'vi' 
+              ? '* Cách lấy mã FireAnt Token: Đăng nhập vào fireant.vn trực tiếp trên trình duyệt máy tính, nhấn F12 -> Mạng (Network) -> bấm xem một yêu cầu bất kỳ gửi đến api.fireant.vn, tìm tiêu đề "Authorization" và sao chép toàn bộ chuỗi mã sau chữ "Bearer ".' 
+              : '* Instructions: Login to fireant.vn on your desktop browser, press F12 -> Go to Network Tab, inspect any dynamic API requests dispatching to api.fireant.vn, look under Request Headers for "Authorization" and copy the token string following the "Bearer " prefix.'}
           </p>
         </div>
       </div>

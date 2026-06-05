@@ -131,9 +131,11 @@ export function Ledger({
     setMarketLoading(true);
     try {
       const apiKey = localStorage.getItem(`fincopilot_apikey_${profile?.id}`) || '';
+      const faToken = localStorage.getItem(`fincopilot_fireant_token_${profile?.id}`) || '';
       const res = await fetch('/api/market-prices', {
         headers: {
-          'x-gemini-api-key': apiKey
+          'x-gemini-api-key': apiKey,
+          'x-fireant-token': faToken
         }
       });
       if (res.ok) {

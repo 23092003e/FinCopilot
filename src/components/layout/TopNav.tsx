@@ -28,7 +28,14 @@ export function TopNav({ profile, activeTab, setActiveTab, assetHoldings = [] }:
     let active = true;
     const fetchPrices = async () => {
       try {
-        const res = await fetch('/api/market-prices');
+        const apiKey = localStorage.getItem(`fincopilot_apikey_${profile?.id}`) || '';
+        const faToken = localStorage.getItem(`fincopilot_fireant_token_${profile?.id}`) || '';
+        const res = await fetch('/api/market-prices', {
+          headers: {
+            'x-gemini-api-key': apiKey,
+            'x-fireant-token': faToken
+          }
+        });
         if (res.ok && active) {
           const data = await res.json();
           setMarketPrices(data);
@@ -43,7 +50,7 @@ export function TopNav({ profile, activeTab, setActiveTab, assetHoldings = [] }:
       active = false;
       clearInterval(interval);
     };
-  }, []);
+  }, [profile?.id]);
 
   // Compute portfolio's current total asset valuation in TopNav
   const portfolioValue = useMemo(() => {

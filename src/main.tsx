@@ -5,6 +5,40 @@ import './index.css';
 import { AuthProvider } from './contexts/AuthContext';
 import { UIProvider } from './contexts/UIContext';
 
+// Filter out and suppress benign Vite WebSocket HMR closed-rejection events in sandbox preview environment
+if ((import.meta as any).env?.DEV) {
+  window.addEventListener('unhandledrejection', (event) => {
+    const reason = event.reason;
+    const msg = typeof reason === 'string' ? reason : (reason?.message || '');
+    if (
+      msg.includes('WebSocket') || 
+      msg.includes('websocket') || 
+      msg.includes('vite') || 
+      msg.includes('hmr') || 
+      msg.includes('HMR')
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      console.warn('[Vite Sandbox Wrapper] Suppressed benign sandbox HMR websocket rejection:', msg);
+    }
+  }, { capture: true });
+
+  window.addEventListener('error', (event) => {
+    const msg = event.message || '';
+    if (
+      msg.includes('WebSocket') || 
+      msg.includes('websocket') || 
+      msg.includes('vite') || 
+      msg.includes('hmr') || 
+      msg.includes('HMR')
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      console.warn('[Vite Sandbox Wrapper] Suppressed benign sandbox HMR websocket error:', msg);
+    }
+  }, { capture: true });
+}
+
 // Register PWA Service Worker
 if ('serviceWorker' in navigator && (import.meta as any).env?.PROD) {
   window.addEventListener('load', () => {

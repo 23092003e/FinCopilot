@@ -261,9 +261,12 @@ async function startServer() {
   app.get('/api/market-prices', async (req, res) => {
     const customApiKey = req.headers['x-gemini-api-key'] as string | undefined;
     const customFireAntToken = req.headers['x-fireant-token'] as string | undefined;
+    
+    const SYSTEM_FIREANT_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6IkdYdExONzViZlZQakdvNERWdjV4QkRITHpnSSIsImtpZCI6IkdYdExONzViZlZQakdvNERWdjV4QkRITHpnSSJ9.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmZpcmVhbnQudm4iLCJhdWQiOiJodHRwczovL2FjY291bnRzLmZpcmVhbnQudm4vcmVzb3VyY2VzIiwiZXhwIjoxODg5NjIyNTMwLCJuYmYiOjE1ODk2MjI1MzAsImNsaWVudF9pZCI6ImZpcmVhbnQudHJhZGVzdGF0aW9uIiwic2NvcGUiOlsiYWNhZGVteS1yZWFkIiwiYWNhZGVteS13cml0ZSIsImFjY291bnRzLXJlYWQiLCJhY2NvdW50cy13cml0ZSIsImJsb2ctcmVhZCIsImNvbXBhbmllcy1yZWFkIiwiZmluYW5jZS1yZWFkIiwiaW5kaXZpZHVhbHMtcmVhZCIsImludmVzdG9wZWRpYS1yZWFkIiwib3JkZXJzLXJlYWQiLCJvcmRlcnMtd3JpdGUiLCJwb3N0cy1yZWFkIiwicG9zdHMtd3JpdGUiLCJzZWFyY2giLCJzeW1ib2xzLXJlYWQiLCJ1c2VyLWRhdGEtcmVhZCIsInVzZXItZGF0YS13cml0ZSIsInVzZXJzLXJlYWQiXSwianRpIjoiMjYxYTZhYWQ2MTQ5Njk1ZmJiYzcwODM5MjM0Njc1NWQifQ.dA5-HVzWv-BRfEiAd24uNBiBxASO-PAyWeWESovZm_hj4aXMAZA1-bWNZeXt88dqogo18AwpDQ-h6gefLPdZSFrG5umC1dVWaeYvUnGm62g4XS29fj6p01dhKNNqrsu5KrhnhdnKYVv9VdmbmqDfWR8wDgglk5cJFqalzq6dJWJInFQEPmUs9BW_Zs8tQDn-i5r4tYq2U8vCdqptXoM7YgPllXaPVDeccC9QNu2Xlp9WUvoROzoQXg25lFub1IYkTrM66gJ6t9fJRZToewCt495WNEOQFa_rwLCZ1QwzvL0iYkONHS_jZ0BOhBCdW9dWSawD6iF1SIQaFROvMDH1rg";
+    const activeFireAntToken = (customFireAntToken && customFireAntToken.trim()) ? customFireAntToken.trim() : SYSTEM_FIREANT_TOKEN;
  
     // Cache validation: Avoid repeated Grounding requests in client-side high-frequent loops (15s polling)
-    const cacheKey = `${customApiKey?.trim() || 'default'}_${customFireAntToken?.trim() || 'default'}`;
+    const cacheKey = `${customApiKey?.trim() || 'default'}_${activeFireAntToken?.trim() || 'default'}`;
     const now = Date.now();
     const cachedEntry = marketPricesCache.get(cacheKey);
 
@@ -319,9 +322,12 @@ async function startServer() {
     let fireAntData: Record<string, { price: number; change: number }> = {};
     let fireAntSuccess = false;
     
-    if (customFireAntToken && customFireAntToken.trim()) {
-      console.log('[Direct FireAnt] Detected custom FireAnt Bearer Token; executing direct queries...');
-      const cleanToken = customFireAntToken.trim();
+    if (activeFireAntToken && activeFireAntToken.trim()) {
+      console.log('[Direct FireAnt] Executing direct FireAnt queries (hardcore/fallback token)...');
+      let cleanToken = activeFireAntToken.trim();
+      if (cleanToken.toLowerCase().startsWith('bearer ')) {
+        cleanToken = cleanToken.slice(7).trim();
+      }
       const headers = {
         'Authorization': `Bearer ${cleanToken}`,
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -339,30 +345,34 @@ async function startServer() {
             if (res.ok) {
               const payload = await res.json();
               let obj = payload;
-              if (payload && payload.data) {
+              if (payload && payload.data !== undefined) {
                 obj = payload.data;
               }
               
               let price: number | null = null;
               const priceKeys = ['price', 'lastPrice', 'close', 'closePrice', 'currentPrice', 'matchPrice', 'last', 'value'];
-              for (const k of priceKeys) {
-                if (obj[k] !== undefined && obj[k] !== null) {
-                  const num = Number(obj[k]);
-                  if (!isNaN(num) && num > 0) {
-                    price = num;
-                    break;
+              if (obj) {
+                for (const k of priceKeys) {
+                  if (obj[k] !== undefined && obj[k] !== null) {
+                    const num = Number(obj[k]);
+                    if (!isNaN(num) && num > 0) {
+                      price = num;
+                      break;
+                    }
                   }
                 }
               }
 
               let change: number | null = null;
               const changeKeys = ['change', 'changePercent', 'percentChange', 'pctChange', 'change_percent', 'priceChangePercent'];
-              for (const k of changeKeys) {
-                if (obj[k] !== undefined && obj[k] !== null) {
-                  const num = Number(obj[k]);
-                  if (!isNaN(num)) {
-                    change = num;
-                    break;
+              if (obj) {
+                for (const k of changeKeys) {
+                  if (obj[k] !== undefined && obj[k] !== null) {
+                    const num = Number(obj[k]);
+                    if (!isNaN(num)) {
+                      change = num;
+                      break;
+                    }
                   }
                 }
               }

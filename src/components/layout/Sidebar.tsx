@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
+import { AppLogo } from '../common/AppLogo';
 
 interface SidebarProps {
   activeTab: string;
@@ -45,10 +46,8 @@ export function Sidebar({ activeTab, setActiveTab, onboardingCompleted = true }:
     <aside className="w-68 bg-zinc-950 border-r border-zinc-900 flex flex-col justify-between shrink-0 h-screen fixed top-0 left-0 z-20 hidden md:flex transition-colors duration-200">
       {/* Brand Label */}
       <div className="p-6 border-b border-zinc-900/60">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/30">
-            <Flame className="w-4 h-4 text-emerald-400 animate-pulse" />
-          </div>
+        <div className="flex items-center gap-2.5">
+          <AppLogo size="md" variant="full" />
           <div>
             <h1 className="text-zinc-100 font-extrabold text-base tracking-tight font-sans">
               FinCopilot

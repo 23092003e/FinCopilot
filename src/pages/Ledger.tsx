@@ -256,25 +256,25 @@ export function Ledger({
       FUESSV50: 'Quỹ ETF SSIAM VN50',
       FUETFID: 'Quỹ ETF IPAAM VN100',
       FUETCMID: 'Quỹ ETF Techcom VN30',
-      GOLD_TA_9999: 'Vàng ta / Vàng nhẫn 9999',
-      GOLD_24K: 'Vàng ta 999 / Vàng 24K',
-      GOLD_WHITE_10K: 'Vàng trắng 10K',
-      GOLD_WHITE_14K: 'Vàng trắng 14K',
-      GOLD_WHITE_18K: 'Vàng trắng 18K',
-      GOLD_ROSE_10K: 'Vàng hồng 10K',
-      GOLD_ROSE_14K: 'Vàng hồng 14K',
-      GOLD_ROSE_18K: 'Vàng hồng 18K',
-      GOLD_WEST_8K: 'Vàng Tây 8K',
-      GOLD_WEST_9K: 'Vàng Tây 9K',
-      GOLD_WEST_10K: 'Vàng Tây 10K',
-      GOLD_WEST_14K: 'Vàng Tây 14K',
-      GOLD_WEST_18K: 'Vàng Tây 18K',
-      GOLD_ITALY_750: 'Vàng Ý 750',
-      GOLD_ITALY_925: 'Vàng bạc Ý 925',
-      GOLD_NON: 'Vàng non',
-      GOLD_MY_KY: 'Vàng mỹ ký',
-      GOLD_SJC: 'Vàng miếng SJC',
-      GOLD_RING: 'Vàng nhẫn 24K 9999'
+      GOLD_TA_9999: 'Vàng nhẫn Bảo Tín Minh Châu 9999',
+      GOLD_24K: 'Nhẫn bảo tín ròng SJC 24K (99.99%)',
+      GOLD_WHITE_10K: 'Vàng trắng PNJ 10K',
+      GOLD_WHITE_14K: 'Vàng trắng PNJ 14K',
+      GOLD_WHITE_18K: 'Vàng trắng PNJ 18K',
+      GOLD_ROSE_10K: 'Vàng hồng DOJI 10K',
+      GOLD_ROSE_14K: 'Vàng hồng DOJI 14K',
+      GOLD_ROSE_18K: 'Vàng hồng DOJI 18K',
+      GOLD_WEST_8K: 'Vàng Tây SJC 8K',
+      GOLD_WEST_9K: 'Vàng Tây SJC 9K',
+      GOLD_WEST_10K: 'Vàng Tây SJC 10K',
+      GOLD_WEST_14K: 'Vàng Tây SJC 14K',
+      GOLD_WEST_18K: 'Vàng Tây SJC 18K',
+      GOLD_ITALY_750: 'Vàng Ý PNJ 750 (18K)',
+      GOLD_ITALY_925: 'Vàng Ý / Bạc Ý PNJ 925',
+      GOLD_NON: 'Vàng non tuổi thấp 10K (Kim Tín)',
+      GOLD_MY_KY: 'Trang sức mỹ ký xi mạ (Kim Tín)',
+      GOLD_SJC: 'Vàng miếng SJC 99.99 (Độc quyền)',
+      GOLD_RING: 'Vàng nhẫn SJC 24K 99.99%'
     };
 
     const types: Record<string, 'ETF' | 'GOLD'> = {
@@ -1417,9 +1417,9 @@ Target structure:
                 { key: 'E1VFVN30', tag: 'ETF VN30', suffix: '/ck' },
                 { key: 'FUEVFVND', tag: 'ETF Diamond', suffix: '/ck' },
                 { key: 'FUESSVFL', tag: 'FinLeads ETF', suffix: '/ck' },
-                { key: 'GOLD_TA_9999', tag: 'Vàng Ta 9999', suffix: '/chỉ' },
-                { key: 'GOLD_WHITE_18K', tag: 'Vàng Trắng 18K', suffix: '/chỉ' },
-                { key: 'GOLD_ITALY_750', tag: 'Vàng Ý 750', suffix: '/chỉ' }
+                { key: 'GOLD_TA_9999', tag: 'Nhẫn BTMC 9999', suffix: '/chỉ' },
+                { key: 'GOLD_WHITE_18K', tag: 'Vàng Trắng PNJ 18K', suffix: '/chỉ' },
+                { key: 'GOLD_ITALY_750', tag: 'Vàng Ý PNJ 18K', suffix: '/chỉ' }
               ].map(({ key, tag, suffix }) => {
                 const getFallbackPrice = (k: string) => {
                   const bases: Record<string, number> = {
@@ -1439,9 +1439,9 @@ Target structure:
                 const isPositive = item.change_percent >= 0;
                 return (
                   <div key={key} className="bg-zinc-950/80 rounded-xl p-3 border border-zinc-900 flex flex-col justify-between hover:border-zinc-800 transition-all duration-200 group">
-                    <div className="flex justify-between items-center gap-1 mb-1">
-                      <span className="text-[10px] font-mono text-zinc-500 uppercase font-black group-hover:text-emerald-400 transition-colors">{key}</span>
-                      <span className="text-[8.5px] px-1 py-0.5 bg-zinc-900 text-zinc-400 rounded border border-zinc-850 font-sans font-medium">{tag}</span>
+                    <div className="flex justify-between items-center gap-1.5 mb-1.5 overflow-hidden">
+                      <span className="text-[9.5px] font-mono text-zinc-500 uppercase font-black group-hover:text-emerald-400 transition-colors truncate min-w-0">{key}</span>
+                      <span className="text-[8px] sm:text-[8.5px] px-1 py-0.5 bg-zinc-900 text-zinc-400 rounded border border-zinc-850 font-sans font-medium whitespace-nowrap shrink-0">{tag}</span>
                     </div>
                     <div className="space-y-0.5">
                       <div className="text-[12.5px] font-extrabold text-zinc-100 font-sans leading-none">
@@ -1687,34 +1687,34 @@ Target structure:
                       ) : (
                         <>
                           <optgroup label={language === 'vi' ? "VÀNG TA / VÀNG CHUẨN 9999" : "PURE GOLD 99.99%"}>
-                            <option value="GOLD_TA_9999">GOLD_TA_9999 - Vàng ta / Vàng nhẫn 9999 (Chỉ)</option>
-                            <option value="GOLD_24K">GOLD_24K - Vàng ta 999 / Vàng 24K (Chỉ)</option>
-                            <option value="GOLD_SJC">GOLD_SJC - Vàng miếng ròng SJC 99.99 (Lượng)</option>
+                            <option value="GOLD_TA_9999">GOLD_TA_9999 - Vàng nhẫn Bảo Tín Minh Châu 9999 (Chỉ)</option>
+                            <option value="GOLD_24K">GOLD_24K - Nhẫn tròn trơn SJC 24K (Chỉ)</option>
+                            <option value="GOLD_SJC">GOLD_SJC - Vàng miếng SJC 99.99 (Lượng)</option>
                           </optgroup>
-                          <optgroup label={language === 'vi' ? "VÀNG TRẮNG" : "WHITE GOLD"}>
-                            <option value="GOLD_WHITE_10K">GOLD_WHITE_10K - Vàng trắng 10K (Chỉ)</option>
-                            <option value="GOLD_WHITE_14K">GOLD_WHITE_14K - Vàng trắng 14K (Chỉ)</option>
-                            <option value="GOLD_WHITE_18K">GOLD_WHITE_18K - Vàng trắng 18K (Chỉ)</option>
+                          <optgroup label={language === 'vi' ? "VÀNG TRẮNG PNJ" : "WHITE GOLD PNJ"}>
+                            <option value="GOLD_WHITE_10K">GOLD_WHITE_10K - Vàng trắng PNJ 10K (Chỉ)</option>
+                            <option value="GOLD_WHITE_14K">GOLD_WHITE_14K - Vàng trắng PNJ 14K (Chỉ)</option>
+                            <option value="GOLD_WHITE_18K">GOLD_WHITE_18K - Vàng trắng PNJ 18K (Chỉ)</option>
                           </optgroup>
-                          <optgroup label={language === 'vi' ? "VÀNG HỒNG" : "ROSE GOLD"}>
-                            <option value="GOLD_ROSE_10K">GOLD_ROSE_10K - Vàng hồng 10K (Chỉ)</option>
-                            <option value="GOLD_ROSE_14K">GOLD_ROSE_14K - Vàng hồng 14K (Chỉ)</option>
-                            <option value="GOLD_ROSE_18K">GOLD_ROSE_18K - Vàng hồng 18K (Chỉ)</option>
+                          <optgroup label={language === 'vi' ? "VÀNG HỒNG DOJI" : "ROSE GOLD DOJI"}>
+                            <option value="GOLD_ROSE_10K">GOLD_ROSE_10K - Vàng hồng DOJI 10K (Chỉ)</option>
+                            <option value="GOLD_ROSE_14K">GOLD_ROSE_14K - Vàng hồng DOJI 14K (Chỉ)</option>
+                            <option value="GOLD_ROSE_18K">GOLD_ROSE_18K - Vàng hồng DOJI 18K (Chỉ)</option>
                           </optgroup>
-                          <optgroup label={language === 'vi' ? "VÀNG TÂY" : "WESTERN ACCOMPANYING GOLD"}>
-                            <option value="GOLD_WEST_8K">GOLD_WEST_8K - Vàng Tây 8K (Chỉ)</option>
-                            <option value="GOLD_WEST_9K">GOLD_WEST_9K - Vàng Tây 9K (Chỉ)</option>
-                            <option value="GOLD_WEST_10K">GOLD_WEST_10K - Vàng Tây 10K (Chỉ)</option>
-                            <option value="GOLD_WEST_14K">GOLD_WEST_14K - Vàng Tây 14K (Chỉ)</option>
-                            <option value="GOLD_WEST_18K">GOLD_WEST_18K - Vàng Tây 18K (Chỉ)</option>
+                          <optgroup label={language === 'vi' ? "VÀNG TÂY SJC" : "WESTERN GOLD SJC"}>
+                            <option value="GOLD_WEST_8K">GOLD_WEST_8K - Vàng Tây SJC 8K (Chỉ)</option>
+                            <option value="GOLD_WEST_9K">GOLD_WEST_9K - Vàng Tây SJC 9K (Chỉ)</option>
+                            <option value="GOLD_WEST_10K">GOLD_WEST_10K - Vàng Tây SJC 10K (Chỉ)</option>
+                            <option value="GOLD_WEST_14K">GOLD_WEST_14K - Vàng Tây SJC 14K (Chỉ)</option>
+                            <option value="GOLD_WEST_18K">GOLD_WEST_18K - Vàng Tây SJC 18K (Chỉ)</option>
                           </optgroup>
-                          <optgroup label={language === 'vi' ? "VÀNG Ý SÁNG" : "ITALIAN GOLD"}>
-                            <option value="GOLD_ITALY_750">GOLD_ITALY_750 - Vàng Ý 750 (Chỉ)</option>
-                            <option value="GOLD_ITALY_925">GOLD_ITALY_925 - Vàng bạc Ý 925 (Gram)</option>
+                          <optgroup label={language === 'vi' ? "VÀNG Ý SÁNG PNJ" : "ITALIAN GOLD PNJ"}>
+                            <option value="GOLD_ITALY_750">GOLD_ITALY_750 - Vàng Ý PNJ 750 (18K) (Chỉ)</option>
+                            <option value="GOLD_ITALY_925">GOLD_ITALY_925 - Vàng Ý / Bạc Ý PNJ 925 (Gram)</option>
                           </optgroup>
-                          <optgroup label={language === 'vi' ? "PHÂN HỆ KHÁC" : "OTHER CATEGORIES"}>
-                            <option value="GOLD_NON">GOLD_NON - Vàng non (Chỉ)</option>
-                            <option value="GOLD_MY_KY">GOLD_MY_KY - Vàng mỹ ký (Chỉ)</option>
+                          <optgroup label={language === 'vi' ? "PHÂN HỆ KHÁC (KIM TÍN)" : "OTHER CATEGORIES (KIM TIN)"}>
+                            <option value="GOLD_NON">GOLD_NON - Vàng non tuổi thấp 10K (Chỉ)</option>
+                            <option value="GOLD_MY_KY">GOLD_MY_KY - Trang sức mỹ ký xi mạ (Chỉ)</option>
                           </optgroup>
                         </>
                       )}

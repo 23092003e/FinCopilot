@@ -32,6 +32,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { AppLogo } from '../common/AppLogo';
 
 export function LoginScreen() {
   const { loginWithEmail, signUpWithEmail, loginWithGoogle, error, setError } = useAuth();
@@ -237,16 +238,14 @@ export function LoginScreen() {
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="mb-6 text-center relative z-10"
       >
-        <div className="inline-flex items-center justify-center p-3.5 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-teal-500/5 border border-emerald-500/30 text-emerald-400 mb-3 shadow-[0_0_25px_rgba(16,185,129,0.2)]">
-          <Sparkles className="w-6 h-6 animate-pulse" />
-        </div>
+        <AppLogo size="lg" variant="full" className="mb-3 mx-auto" />
         <h1 className="text-2.5xl font-extrabold tracking-tight text-zinc-100 font-sans sm:text-3.5xl">
           FinCopilot <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 font-mono">DCA</span>
         </h1>
         <p className="text-zinc-500 text-xs mt-1.5 max-w-sm px-4">
           {language === 'vi' 
-            ? 'La bàn kỹ thuật số giúp bạn làm chủ dòng tiền nhàn rỗi tích sản thông minh ứng dụng AI.' 
-            : 'Personal financial co-pilot powered by high-speed generative AI models.'}
+            ? 'Quản lý tài chính thông minh với Trợ lý AI' 
+            : 'Smart personal finance management powered by your custom AI Co-pilot.'}
         </p>
       </motion.div>
 
@@ -268,15 +267,15 @@ export function LoginScreen() {
             {/* Header intro info */}
             <div className="text-center space-y-1 max-w-xl mx-auto">
               <span className="text-[10px] tracking-widest text-emerald-400 font-bold uppercase font-mono bg-emerald-500/10 px-3 py-1 rounded-full">
-                {language === 'vi' ? 'Hệ thống định vị tài chính thế hệ mới' : 'Next-Generation Financial Steering System'}
+                {language === 'vi' ? 'Trợ lý tài chính cá nhân AI' : 'Personal AI Financial Advisor'}
               </span>
               <h2 className="text-xl font-extrabold text-zinc-100 tracking-tight sm:text-2xl mt-2.5">
-                {language === 'vi' ? 'Thắp sáng tương lai, tự chủ tích lũy số' : 'Chart Your Path to Financial Freedom'}
+                {language === 'vi' ? 'Hoạch định Tài chính Thông minh & Tự động' : 'Smart & Automated Personal Wealth Strategy'}
               </h2>
               <p className="text-zinc-500 text-xs leading-relaxed">
                 {language === 'vi' 
-                  ? 'Khám phá giải pháp phân bổ thặng dư dòng tiền kỷ luật, giảm thiểu tác động lạm phát bằng công nghệ trí tuệ nhân tạo phòng vệ vững vàng.' 
-                  : 'Bridge the gap between raw wealth and strategic compounding using dynamic risk-reward portfolios and artificial intelligence.'}
+                  ? 'FinCopilot đóng vai trò như một người đồng hành đắc lực dành cho người đi làm trẻ tuổi, lập trình viên, và freelancer (25-35 tuổi) tại Việt Nam. Ứng dụng giúp bạn tự động ghi chép chi tiêu qua Telegram, tối ưu hóa cơ cấu phân bổ quỹ an toàn & đầu tư chỉ số dài hạn, đồng thời gợi ý ý tưởng gia tăng thu nhập (side hustle) dựa trên kỹ năng thế mạnh riêng biệt.' 
+                  : 'FinCopilot acts as a smart digital co-pilot tailored for Vietnamese young professionals and freelancers (aged 25-35). It automates your daily transaction tracking via Telegram, designs optimal emergency and benchmark index portfolios, and suggests custom AI-powered side hustles using your personal skills.'}
               </p>
             </div>
 

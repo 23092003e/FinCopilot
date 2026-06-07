@@ -9,6 +9,7 @@ import { Profile } from '../../types';
 import { formatVND } from '../../lib/utils/vnd';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
+import { AppLogo } from '../common/AppLogo';
 
 interface TopNavProps {
   profile: Profile;
@@ -124,11 +125,9 @@ export function TopNav({ profile, activeTab, setActiveTab, assetHoldings = [] }:
   return (
     <header className="bg-zinc-950/80 backdrop-blur border-b border-zinc-900 sticky top-0 z-40 w-full px-6 py-4 flex items-center justify-between transition-colors duration-200">
       {/* Mobile Branding */}
-      <div className="flex items-center gap-2 md:hidden">
-        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/30">
-          <Flame className="w-4 h-4 text-emerald-400" />
-        </div>
-        <span className="text-zinc-100 font-extrabold text-sm font-sans">
+      <div className="flex items-center gap-2.5 md:hidden">
+        <AppLogo size="md" variant="full" />
+        <span className="text-zinc-100 font-extrabold text-base font-sans">
           FinCopilot
         </span>
       </div>

@@ -98,7 +98,7 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
 
     // Screen specific titles and descriptions
     'dashboard.title': 'Bảng Điều Khiển Tài Chính',
-    'dashboard.desc': 'Ứng dụng AI phân tích dòng tiền nhàn rỗi tích sản thông minh ứng dụng Trí Tuệ Nhân Tạo.',
+    'dashboard.desc': 'Hệ thống hỗ trợ phân tích dòng tiền, tự động ghi chép chi tiêu và tư vấn cấu trúc tài sản an toàn cho người trẻ Việt.',
     'advisor.title': 'Co-Pilot Phân Bổ Tài Sản',
     'advisor.desc': 'AI tính toán tỷ lệ dòng tiền nhàn rỗi phân phối tối ưu vào các kênh tài sản dựa trên chỉ số rủi ro.',
     'simulator.title': 'Mô Phỏng DCA',

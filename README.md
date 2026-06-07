@@ -284,115 +284,7 @@ Cơ cấu thư mục được tổ chức tách biệt rõ ràng để tránh xu
     │   │   └── ScenarioCompareChart.tsx # So sánh biến đổi các kịch bản kinh tế vĩ mô
     │   ├── forms/                # Biểu mẫu đăng ký hồ sơ Onboarding đa lớp
     │   │   ├── OnboardingStep1.tsx      # Bước 1: Tài sản hiện trạng, nợ nần & dòng thặng dư
-    │   │   ├── OnboardingStep2.tsx      # Bước 2: Khảo sát đo lường rủi ro & mốc tự do tài chính
-    │   │   └── OnboardingStep3.tsx      # Bước 3: Danh mục thế mạnh và định danh nghề nghiệp
-    │   ├── layout/               # Bộ khung điều khiển chính
-    │   │   ├── Sidebar.tsx              # Thanh chuyển tab thu gọn tối ưu chiều ngang
-    │   │   └── TopNav.tsx               # Header hiển thị Token Webhook & Đồng bộ tài khoản
-    │   └── shared/               # Hiệu ứng trang trí đồ họa
-    │       └── BackgroundUniverse.tsx   # Canvas tạo lập hạt bụi không gian hạt sao tương tác
-    ├── contexts/                 # Vùng lưu trữ trạng thái liên kết toàn cục
-    │   ├── AuthContext.tsx       # Đồng bộ định danh tài khoản và Firebase Core
-    │   └── UIContext.tsx         # Đồng bộ biến số Ngôn ngữ (VI/EN) và Theme giao diện
-    ├── hooks/                    # Các trình xử lý logic nghiệp vụ trích xuất
-    │   └── useProfile.ts         # Quản trị đồng bộ thông suốt cấu hình giữa Local và Firestore
-    └── pages/                    # Các trang hiển thị chính tương ứng các Tab nghiệp vụ
-        ├── Dashboard.tsx         # Báo cáo sức khỏe ví tiền & Gửi nhận xét từ AI hàng tháng
-        ├── Onboarding.tsx        # Khảo sát nạp dữ liệu tài chính ban đầu cho tài khoản mới
-        ├── Advisor.tsx           # Trực quan hóa danh mục khuyến nghị và phân bổ tài sản mục tiêu
-        ├── Ledger.tsx            # Nhật ký thu chi và duyệt biến động số dư từ Webhook ngoài
-        ├── Simulator.tsx         # Máy tính lập kế hoạch tích lũy dồn vốn DCA tuyến tính
-        ├── Scenarios.tsx         # Trình giả lập chạy các kịch bản suy thoái/hưng thịnh kinh tế
-        ├── SideHustle.tsx        # Trợ lý đề xuất lộ trình khởi nghiệp phụ từ kĩ năng chuyên nghiệp
-        └── Settings.tsx          # Quản lý khóa API, đồng bộ token liên kết và cấu trúc dữ liệu
-```
-
----
-
-### Hướng dẫn cài đặt
-
-Hãy đảm bảo thiết bị máy chủ hoặc máy phát triển đã nạp [Node.js (Bản 18 trở lên)](https://nodejs.org/).
-
-```bash
-# 1. Truy cập vào thư mục mã nguồn FinCopilot
-cd fincopilot
-
-# 2. Cài đặt toàn bộ bộ thư viện phụ thuộc của hệ thống
-npm install
-```
-
----
-
-### Khởi động nhanh (Copy-paste chạy được ngay)
-
-Để đưa sản phẩm hoạt động mượt mà đầy đủ mọi tiến trình trong chưa đầy 30 giây:
-
-```bash
-# 1. Sao chép và tạo lập tệp cấu hình tham số môi trường
-cp .env.example .env
-
-# 2. Khởi chạy dự án tích hợp ngay tức thì!
-npm run dev
-```
-
-Mở trình duyệt tại liên kết: [http://localhost:3000](http://localhost:3000) để trải nghiệm.
-
----
-
-### Cơ chế tự động nhận diện AI
-
-FinCopilot tự phân rã cấu trúc tệp API keys được dán vào biểu mẫu Cài đặt hoặc khai báo trong `.env` để định hướng tiến trình nạp mô hình:
-
-| Định dạng API Key | Nhận diện Engine | Mô hình mục tiêu | Cơ chế kết nối |
-|:---|:---|:---|:---|
-| Bắt đầu bằng `sk-ant-` | **Anthropic Claude** | `claude-3-5-haiku-20241022` | API Express máy chủ (Server-Side) |
-| Bắt đầu bằng `sk-` | **OpenAI GPT** | `gpt-4o-mini` | API Express máy chủ (Server-Side) |
-| Định dạng khác / Mặc định | **Google Gemini** | `gemini-3.5-flash` | SDK Google GenAI máy chủ chính thức (Server-Side) |
-
----
-
-### Hướng dẫn sử dụng REST API Webhook
-
-Máy chủ Express liên tục lắng nghe biến động giao dịch từ các bot/script ở bên ngoài.
-
-#### 🕹️ Đẩy giao dịch về hàng đợi Sổ Ledger
-*   **Địa chỉ cổng**: `POST /api/webhook/transaction`
-*   **Bảo mật truy cập**: Truyền param `token` trên URL (Ví dụ: `?token=XYZ`) hoặc đính kèm Header `X-Webhook-Token: <Token_Settings>`.
-*   **Định dạng yêu cầu** (`application/json`):
-```json
-{
-  "type": "expense",
-  "amount_vnd": 65000,
-  "category": "Ăn uống",
-  "description": "Cà phê buổi sáng ghi nhận từ Telegram Bot"
-}
-```
-*   **Quy ước các trường**:
-    *   `type`: Bắt buộc phải là `'income'` (Thu nhập) | `'expense'` (Chi tiêu) | `'investment'` (Đầu tư tích sản).
-    *   `amount_vnd`: Số nguyên dương dạng số lượng (lớn hơn 0).
-    *   `category`: Tên nhãn phân nhóm giao dịch (Không bắt buộc).
-    *   `description`: Mô tả chi tiết phục vụ cho tiến trình AI đánh giá tháng sau.
-
----
-
-### Cấu hình biến môi trường tại tệp `.env`
-
-Đóng góp và khai báo các khóa bí mật của bạn tại tệp tin `.env` ở thư mục gốc:
-
-```env
-# Cấu hình AI mẫu chuẩn Google Gemini (Mặc định)
-GEMINI_API_KEY=AIzaSy...
-
-# Cấu hình OpenAI (Tự khởi động nếu key bộc lộ dạng 'sk-')
-OPENAI_API_KEY=sk-proj-...
-
-# Cấu hình Anthropic Claude (Tự khởi động nếu key bộc lộ dạng 'sk-ant-')
-ANTHROPIC_API_KEY=sk-ant-pix...
-```
-
----
-
-### Các lệnh thao tác trong phát triển
+    │   │   ├── OnboardingSt số rủi ro & Mục tiêu tự do�t triển
 
 ```bash
 # Khởi động không gian Dev (Tích hợp song hành Express Server và Vite Assets Proxy trên cổng 3000)
@@ -423,7 +315,7 @@ Chúng tôi hoan nghênh những ý tưởng đóng góp nâng cấp cốt lõi 
 ### Giấy phép và Bản quyền
 
 Sản phẩm được phân phối chính thức theo Giấy phép [Apache-2.0 open-source license](LICENSE). Toàn bộ khai báo bản quyền được ghi nhận trang nghiêm ở đầu các tệp tin nghiệp vụ lõi và tệp máy chủ `/server.ts`.
-� số rủi ro & Mục tiêu tự do
+� số rủi ro & Mục tiêu tự do
     │   │   └── OnboardingStep3.tsx      # Bước 3: Độc bản kỹ năng nghề nghiệp chuyên môn
     │   ├── layout/               # Thiết kế kết cấu giao diện ngoài
     │   │   ├── Sidebar.tsx              # Thanh tay vịn chuyển tab mượt mà bên trái

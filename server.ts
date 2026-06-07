@@ -111,7 +111,7 @@ function fetchSecureText(url: string): Promise<string> {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': '*/*'
       },
-      timeout: 8000
+      timeout: 2500
     };
     const req = client.get(url, options, (res) => {
       let data = '';
@@ -400,15 +400,31 @@ async function startServer() {
     dataSource = 'real_time_direct_api';
 
     try {
-      console.log('[Direct Market API] Querying live financial exchange rates, gold feeds and HOSE ETFs...');
+      console.log('[Direct Market API] Querying live financial exchange rates, gold feeds and HOSE ETFs in parallel...');
+
+      const etfSymbolsForUrl = [
+        'E1VFVN30', 'FUEVFVND', 'FUESSVFL', 'FUEMAV30', 'FUEKIV30',
+        'FUEVN100', 'FUESSV30', 'FUESSV50', 'FUETFID', 'FUETCMID'
+      ];
+      const vndirectUrl = `https://finfo-api.vndirect.com.vn/v4/stock_prices?q=code:${etfSymbolsForUrl.join(',')}&size=100`;
+      const tcbsUrl = `https://apipub.tcbs.com.vn/api/v1/stock/pre/homepage/list/realtime?tickers=${etfSymbolsForUrl.join(',')}`;
+
+      // Parallelize all slow external HTTP queries with a fast 2.5s timeout!
+      const [rateResSettled, tygiaSecSettled, sjcXmlSecSettled, yfGoldSecSettled, vndirectSecSettled, tcbsSecSettled] = await Promise.allSettled([
+        fetch('https://open.er-api.com/v6/latest/USD'),
+        fetchSecureText('https://www.tygia.com/json.php?db=gold'),
+        fetchSecureText('https://sjc.com.vn/xml/tygiagold.xml'),
+        fetchSecureText('https://query1.finance.yahoo.com/v8/finance/chart/GC=F?interval=1d&range=1d'),
+        fetchSecureText(vndirectUrl),
+        fetchSecureText(tcbsUrl)
+      ]);
 
       // 3.1 Fetch USD exchange rate from ExchangeRate-API (completely open & free endpoint)
       let usdVndRateValue = 25420;
       let usdVndChangeValue = 0.05;
       try {
-        const rateRes = await fetch('https://open.er-api.com/v6/latest/USD');
-        if (rateRes.ok) {
-          const rateData = await rateRes.json();
+        if (rateResSettled.status === 'fulfilled' && rateResSettled.value.ok) {
+          const rateData = await rateResSettled.value.json();
           if (rateData && rateData.rates && rateData.rates.VND) {
             usdVndRateValue = Math.round(Number(rateData.rates.VND));
             console.log(`[Direct Market API] Live USD/VND: ${usdVndRateValue} VND`);
@@ -428,7 +444,7 @@ async function startServer() {
 
       // Primary Gold Fetch: tygia.com
       try {
-        const tygiaText = await fetchSecureText('https://www.tygia.com/json.php?db=gold');
+        const tygiaText = tygiaSecSettled.status === 'fulfilled' ? tygiaSecSettled.value : null;
         if (tygiaText && tygiaText.trim().startsWith('{')) {
           const parsedTygia = JSON.parse(tygiaText);
           if (parsedTygia && parsedTygia.golds) {
@@ -468,31 +484,33 @@ async function startServer() {
       // Fallback Gold Fetch: SJC XML Feed (parsed via Regex + SSL Bypass)
       let sjcSuccess = false;
       try {
-        const xmlText = await fetchSecureText('https://sjc.com.vn/xml/tygiagold.xml');
-        const itemRegex = /<item\s+([^>]+)>/gi;
-        let match;
-        while ((match = itemRegex.exec(xmlText)) !== null) {
-          const attrs = match[1];
-          const typeMatch = /type="([^"]+)"/i.exec(attrs);
-          const buyMatch = /buy="([^"]+)"/i.exec(attrs);
-          const sellMatch = /sell="([^"]+)"/i.exec(attrs);
-          
-          if (typeMatch && buyMatch && sellMatch) {
-            const type = typeMatch[1].trim();
-            const sellRaw = sellMatch[1].trim().replace(/\./g, ''); // "90.500" -> "90500"
-            const sellVal = parseFloat(sellRaw) * 1000;              // "90500" -> 90500000
+        const xmlText = sjcXmlSecSettled.status === 'fulfilled' ? sjcXmlSecSettled.value : null;
+        if (xmlText) {
+          const itemRegex = /<item\s+([^>]+)>/gi;
+          let match;
+          while ((match = itemRegex.exec(xmlText)) !== null) {
+            const attrs = match[1];
+            const typeMatch = /type="([^"]+)"/i.exec(attrs);
+            const buyMatch = /buy="([^"]+)"/i.exec(attrs);
+            const sellMatch = /sell="([^"]+)"/i.exec(attrs);
             
-            if (!isNaN(sellVal) && sellVal > 1000000) {
-              sjcSuccess = true;
-              const normalizedVal = normalizeToVndPerLuong(sellVal);
-              if ((type.includes('SJC 1L') || type.includes('SJC 10L') || type === 'SJC') && !goldSjcValue) {
-                goldSjcValue = normalizedVal;
-              } else if ((type.includes('Nhẫn SJC 99,99') || type.includes('nhẫn SJC') || type.includes('Nhẫn trơn SJC')) && !goldRingValue) {
-                goldRingValue = normalizedVal;
-              } else if ((type.includes('DOJI') || type.includes('Doji')) && !goldDojiValue) {
-                goldDojiValue = normalizedVal;
-              } else if ((type.includes('PNJ') || type.includes('Pnj')) && !goldPnjValue) {
-                goldPnjValue = normalizedVal;
+            if (typeMatch && buyMatch && sellMatch) {
+              const type = typeMatch[1].trim();
+              const sellRaw = sellMatch[1].trim().replace(/\./g, ''); // "90.500" -> "90500"
+              const sellVal = parseFloat(sellRaw) * 1000;              // "90500" -> 90500000
+              
+              if (!isNaN(sellVal) && sellVal > 1000000) {
+                sjcSuccess = true;
+                const normalizedVal = normalizeToVndPerLuong(sellVal);
+                if ((type.includes('SJC 1L') || type.includes('SJC 10L') || type === 'SJC') && !goldSjcValue) {
+                  goldSjcValue = normalizedVal;
+                } else if ((type.includes('Nhẫn SJC 99,99') || type.includes('nhẫn SJC') || type.includes('Nhẫn trơn SJC')) && !goldRingValue) {
+                  goldRingValue = normalizedVal;
+                } else if ((type.includes('DOJI') || type.includes('Doji')) && !goldDojiValue) {
+                  goldDojiValue = normalizedVal;
+                } else if ((type.includes('PNJ') || type.includes('Pnj')) && !goldPnjValue) {
+                  goldPnjValue = normalizedVal;
+                }
               }
             }
           }
@@ -527,7 +545,7 @@ async function startServer() {
       let goldWorldUsdStr = 2368.5;
       let goldWorldChange = 1.25;
       try {
-        const yfGoldText = await fetchSecureText('https://query1.finance.yahoo.com/v8/finance/chart/GC=F?interval=1d&range=1d');
+        const yfGoldText = yfGoldSecSettled.status === 'fulfilled' ? yfGoldSecSettled.value : null;
         if (yfGoldText && yfGoldText.trim().startsWith('{')) {
           const yfGoldJson = JSON.parse(yfGoldText);
           const meta = yfGoldJson?.chart?.result?.[0]?.meta;
@@ -582,7 +600,7 @@ async function startServer() {
       // Chain 1: VNDirect Public Finfo Price API
       try {
         const vndirectUrl = `https://finfo-api.vndirect.com.vn/v4/stock_prices?q=code:${etfSymbols.join(',')}&size=100`;
-        const vndirectText = await fetchSecureText(vndirectUrl);
+        const vndirectText = vndirectSecSettled.status === 'fulfilled' ? vndirectSecSettled.value : null;
         if (vndirectText && vndirectText.trim().startsWith('{')) {
           const vndirectJson = JSON.parse(vndirectText);
           
@@ -614,7 +632,7 @@ async function startServer() {
       // Chain 2: TCBS homepage realtime backup endpoint (only for missing symbols)
       try {
         const tcbsUrl = `https://apipub.tcbs.com.vn/api/v1/stock/pre/homepage/list/realtime?tickers=${etfSymbols.join(',')}`;
-        const tcbsText = await fetchSecureText(tcbsUrl);
+        const tcbsText = tcbsSecSettled.status === 'fulfilled' ? tcbsSecSettled.value : null;
         if (tcbsText && tcbsText.trim().startsWith('{')) {
           const tcbsJson = JSON.parse(tcbsText);
           const dataArr = tcbsJson?.data || tcbsJson || [];
